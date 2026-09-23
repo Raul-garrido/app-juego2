@@ -9,6 +9,13 @@ export const TOOL_SHAPES: ToolShapeId[] = [
   'tornillo',
   'nivel',
   'alicates',
+  'taladro',
+  'amoladora',
+  'llaveAllen',
+  'cintaMetrica',
+  'brocha',
+  'sierraDeArco',
+  'pistolaPegamento',
 ];
 
 export const TOOL_LABELS: Record<ToolShapeId, string> = {
@@ -19,6 +26,13 @@ export const TOOL_LABELS: Record<ToolShapeId, string> = {
   tornillo: 'Tornillo',
   nivel: 'Nivel',
   alicates: 'Alicates',
+  taladro: 'Taladro electrico',
+  amoladora: 'Amoladora',
+  llaveAllen: 'Llave Allen',
+  cintaMetrica: 'Cinta metrica',
+  brocha: 'Brocha',
+  sierraDeArco: 'Sierra de arco',
+  pistolaPegamento: 'Pistola de pegamento',
 };
 
 // Recolorable "handle" accent. Metal parts of every tool stay a fixed

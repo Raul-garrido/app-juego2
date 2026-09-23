@@ -5,7 +5,14 @@ export type ToolShapeId =
   | 'sierra'
   | 'tornillo'
   | 'nivel'
-  | 'alicates';
+  | 'alicates'
+  | 'taladro'
+  | 'amoladora'
+  | 'llaveAllen'
+  | 'cintaMetrica'
+  | 'brocha'
+  | 'sierraDeArco'
+  | 'pistolaPegamento';
 
 export interface ToolVariant {
   shape: ToolShapeId;
