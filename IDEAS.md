@@ -15,7 +15,14 @@ https://claude.ai/artifact/LomK5LgMGh9SkGfxAMXkNB
 
 ## Estado actual
 
-Trabajando en el **prototipo de la idea 1** ("Saca la ficha") para probarla primero por ser la más sencilla (no depende de assets externos, solo lógica de juego).
+**Construyendo la app real de la idea 1** ("Saca la ficha", temática taller) — ya no es solo el prototipo del tablero de ideas, es un proyecto de código en este repo.
+
+- **Stack elegido**: app web (React + Vite + TypeScript), pensada para empaquetar luego con Capacitor como app nativa iOS/Android sin reescribir nada. Se descartó Unity para este puzle concreto porque no puedo abrir ni probar el Editor de Unity desde aquí; con web puedo escribir, ejecutar y verificar el juego yo mismo en cada paso.
+- **Estructura**: `src/game/` (lógica pura: `types.ts`, `tools.ts`, `levelGenerator.ts`, `gameLogic.ts`) separada de `src/components/` (UI: `ToolIcon`, `TileButton`, `Tray`, `GameScreen`). Para arrancarlo: `npm install && npm run dev`.
+- **Mecánica de fichas superpuestas implementada de verdad**: las fichas se generan en pilas (varias por el mismo hueco, una capa encima de otra) y solo la de arriba de cada pila es tocable; al quitarla se destapa la de abajo. Verificado con test automatizado (Playwright + capturas).
+- **Sistema herramienta + color de variante**: 7 formas base (martillo, destornillador, llave, sierra, tornillo, nivel, alicates) como iconos SVG reales, cada una con una parte "mango" recoloreable (6 colores). Cuando se agotan las 7 formas, el generador empieza a reutilizar la misma forma con otro color de mango — es un tipo de ficha distinto a efectos de juego. Da hasta 42 tipos de ficha combinando formas × colores.
+- **Muchos niveles resuelto**: `generateLevel(levelIndex)` genera niveles infinitos de forma procedural (no hay niveles hechos a mano). La dificultad sube con dos mandos independientes: nº de tipos de herramienta en juego y nº de capas apiladas por hueco. Se prueba en consola que genera correctamente hasta nivel 150+ sin romperse.
+- **Pendiente de pulir**: el arte es aún vectorial simple (plano, sin bisel/sombra realista); cuando toque la pasada de arte, sustituir `ToolIcon.tsx` por fichas con acabado 3D realista (bisel, sombra, textura) sin tocar la lógica del juego, que ya está desacoplada de la vista.
 
 ## Pendiente — retomar cuando se pida
 
