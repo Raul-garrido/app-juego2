@@ -25,7 +25,14 @@ export type ToolShapeId =
   | 'sierraCircular'
   | 'sierraSable'
   | 'soplete'
-  | 'tornilloBanco';
+  | 'tornilloBanco'
+  | 'termometroInfrarrojo'
+  | 'detectorMetales'
+  | 'mordazasC'
+  | 'grapadora'
+  | 'aspiradoraManual'
+  | 'aspiradora'
+  | 'soldador';
 
 export interface ToolVariant {
   shape: ToolShapeId;

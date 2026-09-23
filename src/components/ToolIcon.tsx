@@ -28,6 +28,13 @@ import sierraCircular from '../assets/tools-photo/sierraCircular.png';
 import sierraSable from '../assets/tools-photo/sierraSable.png';
 import soplete from '../assets/tools-photo/soplete.png';
 import tornilloBanco from '../assets/tools-photo/tornilloBanco.png';
+import termometroInfrarrojo from '../assets/tools-photo/termometroInfrarrojo.png';
+import detectorMetales from '../assets/tools-photo/detectorMetales.png';
+import mordazasC from '../assets/tools-photo/mordazasC.png';
+import grapadora from '../assets/tools-photo/grapadora.png';
+import aspiradoraManual from '../assets/tools-photo/aspiradoraManual.png';
+import aspiradora from '../assets/tools-photo/aspiradora.png';
+import soldador from '../assets/tools-photo/soldador.png';
 
 const PHOTOS: Record<ToolVariant['shape'], string> = {
   alicates,
@@ -57,6 +64,13 @@ const PHOTOS: Record<ToolVariant['shape'], string> = {
   sierraSable,
   soplete,
   tornilloBanco,
+  termometroInfrarrojo,
+  detectorMetales,
+  mordazasC,
+  grapadora,
+  aspiradoraManual,
+  aspiradora,
+  soldador,
 };
 
 export function ToolIcon({ variant, size = 34 }: { variant: ToolVariant; size?: number }) {

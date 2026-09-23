@@ -31,6 +31,13 @@ export const TOOL_SHAPES: ToolShapeId[] = [
   'compresor',
   'tornilloBanco',
   'nivelLaser',
+  'termometroInfrarrojo',
+  'detectorMetales',
+  'mordazasC',
+  'grapadora',
+  'aspiradoraManual',
+  'aspiradora',
+  'soldador',
 ];
 
 export const TOOL_LABELS: Record<ToolShapeId, string> = {
@@ -61,6 +68,13 @@ export const TOOL_LABELS: Record<ToolShapeId, string> = {
   compresor: 'Compresor',
   tornilloBanco: 'Tornillo de banco',
   nivelLaser: 'Nivel laser',
+  termometroInfrarrojo: 'Termometro infrarrojo',
+  detectorMetales: 'Detector de metales',
+  mordazasC: 'Mordazas en C',
+  grapadora: 'Grapadora de clavos',
+  aspiradoraManual: 'Aspiradora de mano',
+  aspiradora: 'Aspiradora de taller',
+  soldador: 'Soldador',
 };
 
 // Hue-rotation steps applied on top of each photo's real colors.
