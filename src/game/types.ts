@@ -1,18 +1,19 @@
 export type ToolShapeId =
-  | 'martillo'
-  | 'destornillador'
-  | 'llave'
-  | 'sierra'
-  | 'tornillo'
-  | 'nivel'
   | 'alicates'
-  | 'taladro'
-  | 'amoladora'
-  | 'llaveAllen'
+  | 'alicatePunta'
   | 'cintaMetrica'
-  | 'brocha'
-  | 'sierraDeArco'
-  | 'pistolaPegamento';
+  | 'cizalla'
+  | 'cutter'
+  | 'destornillador'
+  | 'estucheLlaves'
+  | 'llaveAllen'
+  | 'llaveTubo'
+  | 'martillo'
+  | 'multimetro'
+  | 'nivel'
+  | 'taladroBrocas'
+  | 'tijeraChapa'
+  | 'tijeraVerde';
 
 export interface ToolVariant {
   shape: ToolShapeId;

@@ -1,4 +1,4 @@
-import { TOOL_SHAPES, TOOL_LABELS, VARIANT_COLORS } from '../game/tools';
+import { TOOL_SHAPES, TOOL_LABELS, VARIANT_HUES } from '../game/tools';
 import { ToolIcon } from './ToolIcon';
 
 /** Dev-only visual QA grid: every tool shape x every handle color. */
@@ -8,7 +8,7 @@ export function IconGallery() {
       {TOOL_SHAPES.map((shape) => (
         <div key={shape} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ width: 160, fontSize: 12, color: '#eceef2' }}>{TOOL_LABELS[shape]}</span>
-          {VARIANT_COLORS.map((_, colorIndex) => (
+          {VARIANT_HUES.map((_, colorIndex) => (
             <div
               key={colorIndex}
               className="tile tile--exposed"
