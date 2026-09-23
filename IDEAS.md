@@ -34,3 +34,9 @@ Decisiones ya tomadas para cuando se retome:
 - **Origen de las imágenes/escenas**: Unity + Asset Store (opción elegida). El usuario ya tiene cuenta de Unity. Se compran/descargan packs de props y muebles, se montan las escenas en el Editor de Unity (esto es trabajo manual de UI que el usuario debe hacer en el Editor), y se reutilizan 3–4 salas base para muchos niveles cambiando cámara, iluminación y disposición de props. Se descartó generar imágenes con IA o de forma aleatoria (no da la calidad/coherencia necesaria para este género).
 - Yo puedo escribir la lógica de juego en C# (detección de toques, sistema de pistas, estructura de niveles) para que el usuario solo tenga que ir metiendo los assets en el Editor.
 - **Temática**: sigue sin decidirse. Candidatas: mansión/detective (la del prototipo de muestra), desván familiar/herencia, hotel abandonado, tienda de antigüedades (esta última encaja muy bien con lo de coleccionar cartas del JigsawCard).
+- **Referencia del modelo de juego (no de la tematica)**: `docs/references/idea6-hidden-objects-reference.jpg` — captura de "Search It: Hidden Objects". Es el modelo de interfaz/búsqueda a seguir cuando se construya esta idea:
+  - Escena ilustrada, muy detallada y recargada (aqui una oficina; la nuestra sera otra tematica), vista isometrica/elevada con muchos personajes y objetos de fondo para que los objetivos se camuflen entre el ruido visual.
+  - Los objetos a encontrar se listan arriba en 2-3 filas de iconos pequeños en cuadros redondeados (no como texto), a modo de checklist visual permanente mientras juegas, no un panel aparte.
+  - Cronometro visible arriba a la izquierda (presion de tiempo, no es libre).
+  - Boton "Jugar" fijo abajo para entrar a la partida.
+  - Es tal cual la mecanica de la idea 6 que ya teniamos pensada; esta imagen es solo la referencia visual/UX concreta a imitar en la disposicion (checklist arriba en iconos, escena abajo, temporizador) cuando toque construirlo.
