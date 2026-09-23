@@ -19,6 +19,18 @@ export const TOOL_SHAPES: ToolShapeId[] = [
   'taladroBrocas',
   'estucheLlaves',
   'multimetro',
+  'amoladora',
+  'lijadora',
+  'sierraCircular',
+  'sierraSable',
+  'pistolaCalor',
+  'soplete',
+  'oscilante',
+  'rotativa',
+  'esmeriladora',
+  'compresor',
+  'tornilloBanco',
+  'nivelLaser',
 ];
 
 export const TOOL_LABELS: Record<ToolShapeId, string> = {
@@ -37,6 +49,18 @@ export const TOOL_LABELS: Record<ToolShapeId, string> = {
   taladroBrocas: 'Juego de brocas',
   estucheLlaves: 'Estuche de llaves',
   multimetro: 'Multimetro',
+  amoladora: 'Amoladora',
+  lijadora: 'Lijadora',
+  sierraCircular: 'Sierra circular',
+  sierraSable: 'Sierra sable',
+  pistolaCalor: 'Pistola de calor',
+  soplete: 'Soplete',
+  oscilante: 'Multiherramienta oscilante',
+  rotativa: 'Herramienta rotativa',
+  esmeriladora: 'Esmeriladora de banco',
+  compresor: 'Compresor',
+  tornilloBanco: 'Tornillo de banco',
+  nivelLaser: 'Nivel laser',
 };
 
 // Hue-rotation steps applied on top of each photo's real colors.

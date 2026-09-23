@@ -13,7 +13,19 @@ export type ToolShapeId =
   | 'nivel'
   | 'taladroBrocas'
   | 'tijeraChapa'
-  | 'tijeraVerde';
+  | 'tijeraVerde'
+  | 'amoladora'
+  | 'compresor'
+  | 'esmeriladora'
+  | 'lijadora'
+  | 'nivelLaser'
+  | 'oscilante'
+  | 'pistolaCalor'
+  | 'rotativa'
+  | 'sierraCircular'
+  | 'sierraSable'
+  | 'soplete'
+  | 'tornilloBanco';
 
 export interface ToolVariant {
   shape: ToolShapeId;

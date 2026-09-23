@@ -16,6 +16,18 @@ import nivel from '../assets/tools-photo/nivel.png';
 import taladroBrocas from '../assets/tools-photo/taladroBrocas.png';
 import tijeraChapa from '../assets/tools-photo/tijeraChapa.png';
 import tijeraVerde from '../assets/tools-photo/tijeraVerde.png';
+import amoladora from '../assets/tools-photo/amoladora.png';
+import compresor from '../assets/tools-photo/compresor.png';
+import esmeriladora from '../assets/tools-photo/esmeriladora.png';
+import lijadora from '../assets/tools-photo/lijadora.png';
+import nivelLaser from '../assets/tools-photo/nivelLaser.png';
+import oscilante from '../assets/tools-photo/oscilante.png';
+import pistolaCalor from '../assets/tools-photo/pistolaCalor.png';
+import rotativa from '../assets/tools-photo/rotativa.png';
+import sierraCircular from '../assets/tools-photo/sierraCircular.png';
+import sierraSable from '../assets/tools-photo/sierraSable.png';
+import soplete from '../assets/tools-photo/soplete.png';
+import tornilloBanco from '../assets/tools-photo/tornilloBanco.png';
 
 const PHOTOS: Record<ToolVariant['shape'], string> = {
   alicates,
@@ -33,6 +45,18 @@ const PHOTOS: Record<ToolVariant['shape'], string> = {
   taladroBrocas,
   tijeraChapa,
   tijeraVerde,
+  amoladora,
+  compresor,
+  esmeriladora,
+  lijadora,
+  nivelLaser,
+  oscilante,
+  pistolaCalor,
+  rotativa,
+  sierraCircular,
+  sierraSable,
+  soplete,
+  tornilloBanco,
 };
 
 export function ToolIcon({ variant, size = 34 }: { variant: ToolVariant; size?: number }) {
