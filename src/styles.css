@@ -148,11 +148,13 @@ button {
 }
 
 .tile--covered {
-  filter: brightness(0.62) saturate(0.75);
+  filter: brightness(0.42) saturate(0.45);
   box-shadow:
     0 1px 0 #c7b78d,
     0 2px 3px rgba(0, 0, 0, 0.35),
-    inset 0 -4px 6px rgba(0, 0, 0, 0.18);
+    inset 0 0 0 2000px rgba(0, 0, 0, 0.22),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.25);
+  cursor: default;
 }
 
 .tray {

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { generateLevel } from '../game/levelGenerator';
 import { computeExposed, tapTile } from '../game/gameLogic';
+import { panelBackgroundFor } from '../game/backgrounds';
 import type { Stage } from '../game/types';
 import { TileButton } from './TileButton';
 import { Tray } from './Tray';
@@ -46,7 +47,7 @@ export function GameScreen() {
   }
 
   return (
-    <div className="screen">
+    <div className="screen" style={{ background: panelBackgroundFor(levelIndex) }}>
       <div className="hud">
         <span className="hud__level">Nivel {levelIndex + 1}</span>
         <span className="hud__meta">
