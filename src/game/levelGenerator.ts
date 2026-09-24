@@ -3,29 +3,32 @@ import { MAX_TILE_TYPES, variantForIndex } from './tools';
 
 const TRAY_CAPACITY = 7;
 const TILE_SIZE = 46;
-const LAYER_STEP = 7;
+const CONTAINER_WIDTH = 260;
 
-// The first 12 anchors are hand-placed so a level using only a few of
-// them still spreads across the whole pile area (top, middle and
-// bottom), instead of filling row by row and leaving the bottom empty.
-// Beyond that, more rows are generated procedurally on the same 4
-// columns so very late, very crowded levels never run out of room
-// instead of stacking dozens of tiles on the same spot.
-const BASE_ANCHORS: Array<{ x: number; y: number }> = [
-  { x: 14, y: 7 }, { x: 283, y: 205 }, { x: 96, y: 107 }, { x: 193, y: 6 },
-  { x: 7, y: 214 }, { x: 275, y: 106 }, { x: 277, y: 15 }, { x: 105, y: 207 },
-  { x: 15, y: 113 }, { x: 95, y: 14 }, { x: 186, y: 213 }, { x: 194, y: 114 },
-];
-const COL_X = [14, 96, 193, 277];
-const ROW_HEIGHT = 100;
-const EXTRA_ROWS_START_Y = 314;
+// The peek offset is fixed, not scaled by stack depth: every covered
+// tile in a cluster sits at the same small offset behind the exposed
+// (topmost) one, which stays exactly on the cluster's anchor. That
+// keeps a cluster's on-screen footprint the same whether it's 2 tiles
+// deep or 6 - only the offset between GRID_STEP and jitter matters for
+// whether neighbouring clickable tiles stay reachable, not stack depth.
+const PEEK_OFFSET = 5;
 
-function clusterAnchor(n: number): { x: number; y: number } {
-  if (n < BASE_ANCHORS.length) return BASE_ANCHORS[n];
-  const extraIndex = n - BASE_ANCHORS.length;
-  const row = Math.floor(extraIndex / COL_X.length);
-  const col = extraIndex % COL_X.length;
-  return { x: COL_X[col], y: EXTRA_ROWS_START_Y + row * ROW_HEIGHT };
+// Packed grid: GRID_STEP is under TILE_SIZE, so neighbouring stacks
+// overlap by design (mahjong-style clutter) instead of floating as
+// separate islands with empty gaps between them. It's kept large
+// enough, together with the small jitter below, that two neighbouring
+// exposed (clickable) tiles never fully cover each other - only the
+// covered tiles peeking out from underneath are meant to be obscured.
+const GRID_STEP = 40;
+
+// Small deterministic per-cluster jitter (position + rotation) so the
+// pile reads as an organic jumble, not a rigid grid, while staying
+// identical every time the same level is generated.
+function jitterFor(n: number): { dx: number; dy: number; rot: number } {
+  const dx = ((n * 53) % 7) - 3; // -3..3
+  const dy = ((n * 29) % 7) - 3; // -3..3
+  const rot = ((n * 17) % 13) - 6; // -6..6 degrees
+  return { dx, dy, rot };
 }
 
 function mulberry32(seed: number) {
@@ -55,14 +58,13 @@ function seededShuffle<T>(list: T[], seed: number): T[] {
  *   (more types = harder to complete a triple before the tray fills).
  * - layers: how many tiles can stack on the same spot (more layers =
  *   more hidden tiles you must dig through in the right order).
- * numTypes is capped at MAX_TILE_TYPES (7 base shapes x 6 handle
- * colors), so levels stay generatable forever without needing new art;
- * once that cap is hit, every later level just reshuffles the same 42
- * tile types at max layers, which is still a fresh layout each time.
+ * Layers start at 2 (never a flat, everything-exposed board — that
+ * isn't a puzzle) and both knobs are capped so levels stay generatable
+ * forever without needing new art.
  */
 export function generateLevel(levelIndex: number): LevelDef {
   const numTypes = Math.min(3 + Math.floor(levelIndex / 2), MAX_TILE_TYPES);
-  const layers = Math.min(1 + Math.floor(levelIndex / 3), 5);
+  const layers = Math.min(2 + Math.floor(levelIndex / 3), 6);
 
   const variants: ToolVariant[] = [];
   for (let i = 0; i < numTypes; i++) variants.push(variantForIndex(i));
@@ -72,16 +74,41 @@ export function generateLevel(levelIndex: number): LevelDef {
   const shuffled = seededShuffle(bag, levelIndex + 1);
 
   const clusterCount = Math.max(Math.ceil(shuffled.length / layers), 1);
-  const clusterFill = new Array(clusterCount).fill(0);
 
-  let maxY = 0;
+  // A near-square grid (rather than a fixed wide row count) so a small
+  // level forms a compact block instead of a thin strip with empty
+  // space below it, and it's centred so it doesn't hug the left edge.
+  const cols = Math.max(1, Math.ceil(Math.sqrt(clusterCount)));
+  const rows = Math.ceil(clusterCount / cols);
+  const gridWidth = cols * GRID_STEP;
+  const gridHeight = rows * GRID_STEP;
+  const xOffset = Math.max(0, (CONTAINER_WIDTH - gridWidth) / 2);
+
+  function clusterAnchor(n: number): { x: number; y: number } {
+    const col = n % cols;
+    const row = Math.floor(n / cols);
+    const { dx, dy } = jitterFor(n);
+    return { x: xOffset + col * GRID_STEP + dx, y: row * GRID_STEP + dy };
+  }
+
+  // First pass: how many tiles land in each cluster, so we know which
+  // one is the topmost (exposed, no offset) ahead of time.
+  const clusterSize = new Array(clusterCount).fill(0);
+  shuffled.forEach((_, idx) => clusterSize[idx % clusterCount]++);
+
+  const clusterFill = new Array(clusterCount).fill(0);
+  let maxY = gridHeight;
   const tiles: Tile[] = shuffled.map((variant, idx) => {
     const clusterId = idx % clusterCount;
     const layer = clusterFill[clusterId]++;
+    const isTop = layer === clusterSize[clusterId] - 1;
     const anchor = clusterAnchor(clusterId);
-    const y = anchor.y + layer * LAYER_STEP;
+    const { rot } = jitterFor(clusterId);
+    const offset = isTop ? 0 : PEEK_OFFSET;
+    const x = anchor.x + offset;
+    const y = anchor.y + offset;
     maxY = Math.max(maxY, y + TILE_SIZE);
-    return { id: idx, variant, clusterId, layer, x: anchor.x + layer * LAYER_STEP, y };
+    return { id: idx, variant, clusterId, layer, x, y, rot };
   });
 
   return { index: levelIndex, tiles, trayCapacity: TRAY_CAPACITY, numTypes, layers, pileHeight: Math.max(maxY + 10, 280) };

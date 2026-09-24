@@ -12,7 +12,7 @@ export function TileButton({ tile, exposed, onTap }: Props) {
   return (
     <button
       className={`tile${exposed ? ' tile--exposed' : ' tile--covered'}`}
-      style={{ left: tile.x, top: tile.y, zIndex: tile.layer }}
+      style={{ left: tile.x, top: tile.y, zIndex: tile.layer, ['--tile-rot' as string]: `${tile.rot}deg` }}
       onClick={() => exposed && onTap(tile.id)}
       disabled={!exposed}
       aria-label="Herramienta"

@@ -46,6 +46,7 @@ export interface Tile {
   layer: number;
   x: number;
   y: number;
+  rot: number;
 }
 
 export interface LevelDef {

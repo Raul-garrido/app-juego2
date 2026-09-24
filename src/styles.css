@@ -126,6 +126,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: rotate(var(--tile-rot, 0deg));
   transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
 }
 
@@ -138,7 +139,7 @@ button {
 }
 
 .tile--exposed:active {
-  transform: translateY(3px);
+  transform: rotate(var(--tile-rot, 0deg)) translateY(3px);
   box-shadow:
     0 0 0 #c7b78d,
     0 2px 4px rgba(0, 0, 0, 0.35),
