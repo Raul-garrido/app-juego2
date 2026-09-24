@@ -1,35 +1,7 @@
 import type { LevelDef, Tile, ToolVariant } from './types';
 import { MAX_TILE_TYPES, variantForIndex } from './tools';
 
-const TRAY_CAPACITY = 7;
-const TILE_SIZE = 46;
-const CONTAINER_WIDTH = 260;
-
-// The peek offset is fixed, not scaled by stack depth: every covered
-// tile in a cluster sits at the same small offset behind the exposed
-// (topmost) one, which stays exactly on the cluster's anchor. That
-// keeps a cluster's on-screen footprint the same whether it's 2 tiles
-// deep or 6 - only the offset between GRID_STEP and jitter matters for
-// whether neighbouring clickable tiles stay reachable, not stack depth.
-const PEEK_OFFSET = 5;
-
-// Packed grid: GRID_STEP is under TILE_SIZE, so neighbouring stacks
-// overlap by design (mahjong-style clutter) instead of floating as
-// separate islands with empty gaps between them. It's kept large
-// enough, together with the small jitter below, that two neighbouring
-// exposed (clickable) tiles never fully cover each other - only the
-// covered tiles peeking out from underneath are meant to be obscured.
-const GRID_STEP = 40;
-
-// Small deterministic per-cluster jitter (position + rotation) so the
-// pile reads as an organic jumble, not a rigid grid, while staying
-// identical every time the same level is generated.
-function jitterFor(n: number): { dx: number; dy: number; rot: number } {
-  const dx = ((n * 53) % 7) - 3; // -3..3
-  const dy = ((n * 29) % 7) - 3; // -3..3
-  const rot = ((n * 17) % 13) - 6; // -6..6 degrees
-  return { dx, dy, rot };
-}
+export const TILE_SIZE = 38;
 
 function mulberry32(seed: number) {
   let a = seed;
@@ -52,64 +24,122 @@ function seededShuffle<T>(list: T[], seed: number): T[] {
   return arr;
 }
 
+interface Cell {
+  col: number;
+  row: number;
+  layer: number;
+}
+
 /**
- * Difficulty grows with the level index by two independent knobs:
- * - numTypes: how many distinct tool+color combinations are in play
- *   (more types = harder to complete a triple before the tray fills).
- * - layers: how many tiles can stack on the same spot (more layers =
- *   more hidden tiles you must dig through in the right order).
- * Layers start at 2 (never a flat, everything-exposed board — that
- * isn't a puzzle) and both knobs are capped so levels stay generatable
- * forever without needing new art.
+ * Stepped-pyramid board: layer 0 is a cols0 x rows0 rectangle, and every
+ * layer above is inset by one cell on each side. Every layer shares the
+ * same col/row numbering, so a higher-layer tile sits at the exact pixel
+ * spot of whatever it covers below - which is what makes "something on
+ * top of it" a simple lookup instead of needing a separate stacking model.
  */
-export function generateLevel(levelIndex: number): LevelDef {
-  const numTypes = Math.min(3 + Math.floor(levelIndex / 2), MAX_TILE_TYPES);
-  const layers = Math.min(2 + Math.floor(levelIndex / 3), 6);
+function buildShape(cols0: number, rows0: number, maxLayers: number): Cell[] {
+  const cells: Cell[] = [];
+  for (let layer = 0; layer < maxLayers; layer++) {
+    const colStart = layer;
+    const colEnd = cols0 - 1 - layer;
+    const rowStart = layer;
+    const rowEnd = rows0 - 1 - layer;
+    if (colEnd - colStart < 1 || rowEnd - rowStart < 1) break;
+    for (let row = rowStart; row <= rowEnd; row++) {
+      for (let col = colStart; col <= colEnd; col++) {
+        cells.push({ col, row, layer });
+      }
+    }
+  }
+  return cells;
+}
 
-  const variants: ToolVariant[] = [];
-  for (let i = 0; i < numTypes; i++) variants.push(variantForIndex(i));
+/**
+ * Assigns a matching variant to every cell so the finished board is
+ * guaranteed solvable, using a structural fact about the stepped-pyramid
+ * shape instead of simulating removals: because cols0/rows0 are forced
+ * even and every layer shrinks each side by exactly 1 cell, every single
+ * row (one specific row, one specific layer) always has an EVEN width.
+ * Pairing each row's current outermost two cells together, folding
+ * inward, therefore always keeps that row's remaining width even too -
+ * it can never stall on a lone unpaired cell with nothing left to match.
+ *
+ * A pair's two cells stay within one row/layer, and a row's own two
+ * outer cells are never covered by a higher layer (a layer's rectangle
+ * always insets 1 cell from the one below, so it never reaches that
+ * row's edge columns) - so unwinding layers top-down, and each row
+ * outside-in, is a valid real playthrough order for this exact pairing.
+ */
+function assignSolvableVariants(shape: Cell[], numTypes: number, seed: number): ToolVariant[] {
+  const rng = mulberry32(seed);
+  const assigned = new Array<ToolVariant>(shape.length);
 
-  const bag: ToolVariant[] = [];
-  variants.forEach((v) => bag.push(v, v, v));
-  const shuffled = seededShuffle(bag, levelIndex + 1);
+  const rows = new Map<string, number[]>();
+  shape.forEach((c, i) => {
+    const key = `${c.layer}:${c.row}`;
+    if (!rows.has(key)) rows.set(key, []);
+    rows.get(key)!.push(i);
+  });
+  for (const indices of rows.values()) indices.sort((a, b) => shape[a].col - shape[b].col);
 
-  const clusterCount = Math.max(Math.ceil(shuffled.length / layers), 1);
-
-  // A near-square grid (rather than a fixed wide row count) so a small
-  // level forms a compact block instead of a thin strip with empty
-  // space below it, and it's centred so it doesn't hug the left edge.
-  const cols = Math.max(1, Math.ceil(Math.sqrt(clusterCount)));
-  const rows = Math.ceil(clusterCount / cols);
-  const gridWidth = cols * GRID_STEP;
-  const gridHeight = rows * GRID_STEP;
-  const xOffset = Math.max(0, (CONTAINER_WIDTH - gridWidth) / 2);
-
-  function clusterAnchor(n: number): { x: number; y: number } {
-    const col = n % cols;
-    const row = Math.floor(n / cols);
-    const { dx, dy } = jitterFor(n);
-    return { x: xOffset + col * GRID_STEP + dx, y: row * GRID_STEP + dy };
+  const pairs: [number, number][] = [];
+  for (const indices of rows.values()) {
+    let lo = 0;
+    let hi = indices.length - 1;
+    while (lo < hi) {
+      pairs.push([indices[lo], indices[hi]]);
+      lo++;
+      hi--;
+    }
   }
 
-  // First pass: how many tiles land in each cluster, so we know which
-  // one is the topmost (exposed, no offset) ahead of time.
-  const clusterSize = new Array(clusterCount).fill(0);
-  shuffled.forEach((_, idx) => clusterSize[idx % clusterCount]++);
-
-  const clusterFill = new Array(clusterCount).fill(0);
-  let maxY = gridHeight;
-  const tiles: Tile[] = shuffled.map((variant, idx) => {
-    const clusterId = idx % clusterCount;
-    const layer = clusterFill[clusterId]++;
-    const isTop = layer === clusterSize[clusterId] - 1;
-    const anchor = clusterAnchor(clusterId);
-    const { rot } = jitterFor(clusterId);
-    const offset = isTop ? 0 : PEEK_OFFSET;
-    const x = anchor.x + offset;
-    const y = anchor.y + offset;
-    maxY = Math.max(maxY, y + TILE_SIZE);
-    return { id: idx, variant, clusterId, layer, x, y, rot };
+  // Shuffling the pair processing order (not the cell->variant mapping
+  // itself) scatters which numeric variant id lands on which pair, so
+  // same-colour pairs read as scattered across the board rather than
+  // clustered row by row, while every pair still keeps its own two
+  // cells matched to each other.
+  const shuffledPairs = seededShuffle(pairs, Math.floor(rng() * 1e9));
+  shuffledPairs.forEach(([a, b], i) => {
+    const variant = variantForIndex(i % numTypes);
+    assigned[a] = variant;
+    assigned[b] = variant;
   });
 
-  return { index: levelIndex, tiles, trayCapacity: TRAY_CAPACITY, numTypes, layers, pileHeight: Math.max(maxY + 10, 280) };
+  return assigned;
+}
+
+export function generateLevel(levelIndex: number): LevelDef {
+  const numTypes = Math.min(3 + Math.floor(levelIndex / 2), MAX_TILE_TYPES);
+  const maxLayers = Math.min(2 + Math.floor(levelIndex / 3), 6);
+  const size = Math.min(6 + Math.floor(levelIndex / 4), 10);
+  const cols0 = size % 2 === 0 ? size : size + 1;
+  const rows0 = cols0;
+
+  // cols0/rows0 are forced even and every layer insets by 1 cell on each
+  // side, so every layer's width/height stays even too - the shape's
+  // total cell count is always even already, with no trim needed.
+  const shape = buildShape(cols0, rows0, maxLayers);
+
+  const variants = assignSolvableVariants(shape, numTypes, levelIndex + 1);
+
+  const tiles: Tile[] = shape.map((c, i) => ({
+    id: i,
+    variant: variants[i],
+    col: c.col,
+    row: c.row,
+    layer: c.layer,
+    x: c.col * TILE_SIZE,
+    y: c.row * TILE_SIZE,
+  }));
+
+  const actualLayers = shape.reduce((max, c) => Math.max(max, c.layer), 0) + 1;
+
+  return {
+    index: levelIndex,
+    tiles,
+    numTypes,
+    layers: actualLayers,
+    pileWidth: cols0 * TILE_SIZE,
+    pileHeight: rows0 * TILE_SIZE,
+  };
 }

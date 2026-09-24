@@ -42,19 +42,21 @@ export interface ToolVariant {
 export interface Tile {
   id: number;
   variant: ToolVariant;
-  clusterId: number;
+  /** Grid position shared by every layer, so a tile directly above/beside
+   * another one (same col/row) is what makes it locked. */
+  col: number;
+  row: number;
   layer: number;
   x: number;
   y: number;
-  rot: number;
 }
 
 export interface LevelDef {
   index: number;
   tiles: Tile[];
-  trayCapacity: number;
   numTypes: number;
   layers: number;
+  pileWidth: number;
   pileHeight: number;
 }
 

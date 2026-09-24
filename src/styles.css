@@ -112,22 +112,21 @@ button {
 
 .pile {
   position: relative;
-  width: 100%;
   flex-shrink: 0;
+  margin: 0 auto;
 }
 
 .tile {
   position: absolute;
-  width: 46px;
-  height: 46px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 7px;
   background: linear-gradient(160deg, #fdfaf3 0%, #ece1c8 100%);
   border: 1px solid #d9cca9;
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: rotate(var(--tile-rot, 0deg));
-  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
+  transition: filter 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
 }
 
 .tile--exposed {
@@ -139,12 +138,21 @@ button {
 }
 
 .tile--exposed:active {
-  transform: rotate(var(--tile-rot, 0deg)) translateY(3px);
+  transform: translateY(3px);
   box-shadow:
     0 0 0 #c7b78d,
     0 2px 4px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
     inset 0 -3px 4px rgba(0, 0, 0, 0.08);
+}
+
+.tile--selected {
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 3px 0 #c7b78d,
+    0 7px 10px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  transform: translateY(-2px);
 }
 
 .tile--covered {
@@ -155,36 +163,6 @@ button {
     inset 0 0 0 2000px rgba(0, 0, 0, 0.22),
     inset 0 -4px 6px rgba(0, 0, 0, 0.25);
   cursor: default;
-}
-
-.tray {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 10px;
-  background: #191a22;
-  border-radius: 14px;
-  margin-top: auto;
-}
-
-.tray-slot {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: #191a22;
-  border: 2px dashed #3a3d4d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tray-slot--filled {
-  background: linear-gradient(160deg, #fdfaf3 0%, #ece1c8 100%);
-  border: 1px solid #d9cca9;
-  box-shadow:
-    0 2px 0 #c7b78d,
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .card {

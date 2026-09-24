@@ -4,17 +4,26 @@ import { variantKey } from '../game/tools';
 
 interface Props {
   tile: Tile;
-  exposed: boolean;
+  free: boolean;
+  selected: boolean;
   onTap: (id: number) => void;
 }
 
-export function TileButton({ tile, exposed, onTap }: Props) {
+export function TileButton({ tile, free, selected, onTap }: Props) {
+  const className = [
+    'tile',
+    free ? 'tile--exposed' : 'tile--covered',
+    selected ? 'tile--selected' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <button
-      className={`tile${exposed ? ' tile--exposed' : ' tile--covered'}`}
-      style={{ left: tile.x, top: tile.y, zIndex: tile.layer, ['--tile-rot' as string]: `${tile.rot}deg` }}
-      onClick={() => exposed && onTap(tile.id)}
-      disabled={!exposed}
+      className={className}
+      style={{ left: tile.x, top: tile.y, zIndex: tile.layer }}
+      onClick={() => free && onTap(tile.id)}
+      disabled={!free}
       aria-label="Herramienta"
       data-variant={variantKey(tile.variant)}
     >

@@ -1,60 +1,82 @@
 import type { Tile } from './types';
 import { variantKey } from './tools';
 
-/** A tile is tappable only if it's the highest layer still present in its stack. */
-export function computeExposed(tiles: Tile[], removed: ReadonlySet<number>): Set<number> {
-  const topByCluster = new Map<number, Tile>();
-  for (const tile of tiles) {
-    if (removed.has(tile.id)) continue;
-    const current = topByCluster.get(tile.clusterId);
-    if (!current || tile.layer > current.layer) topByCluster.set(tile.clusterId, tile);
-  }
-  return new Set(Array.from(topByCluster.values(), (t) => t.id));
+function cellKey(col: number, row: number): string {
+  return `${col},${row}`;
 }
 
-export interface TapResult {
+/**
+ * Real Mahjong Solitaire freedom rule: a tile is playable only if nothing
+ * else sits on top of it (same col/row, higher layer) AND at least one
+ * lateral side - left or right, at its own layer - is completely open.
+ */
+export function computeFree(tiles: Tile[], removed: ReadonlySet<number>): Set<number> {
+  const present = tiles.filter((t) => !removed.has(t.id));
+  const topLayerAt = new Map<string, number>();
+  const occupied = new Set<string>();
+  for (const t of present) {
+    const key = cellKey(t.col, t.row);
+    const current = topLayerAt.get(key);
+    if (current === undefined || t.layer > current) topLayerAt.set(key, t.layer);
+    occupied.add(`${t.col},${t.row},${t.layer}`);
+  }
+
+  const free = new Set<number>();
+  for (const t of present) {
+    if (topLayerAt.get(cellKey(t.col, t.row)) !== t.layer) continue;
+    const leftOpen = !occupied.has(`${t.col - 1},${t.row},${t.layer}`);
+    const rightOpen = !occupied.has(`${t.col + 1},${t.row},${t.layer}`);
+    if (leftOpen || rightOpen) free.add(t.id);
+  }
+  return free;
+}
+
+/** Whether at least one matching pair of currently-free tiles remains. */
+export function hasAvailableMove(tiles: Tile[], removed: ReadonlySet<number>): boolean {
+  const free = computeFree(tiles, removed);
+  const byId = new Map(tiles.map((t) => [t.id, t]));
+  const seen = new Set<string>();
+  for (const id of free) {
+    const key = variantKey(byId.get(id)!.variant);
+    if (seen.has(key)) return true;
+    seen.add(key);
+  }
+  return false;
+}
+
+export interface MatchResult {
   removed: Set<number>;
-  tray: number[];
   stage: 'playing' | 'levelCleared' | 'lost';
 }
 
 /**
- * Resolves tapping tile `id`: adds it to the tray, clears a completed
- * triple if one formed, and decides whether the level is now cleared or
- * lost (tray full with no completed set).
+ * Resolves picking a second tile against the first selection: only
+ * matches (and removes both) when they're the same tool+color AND both
+ * are currently free. Returns null when the pair doesn't resolve, so the
+ * caller can decide what to do with the tap (e.g. re-select).
  */
-export function tapTile(
+export function resolvePair(
   tiles: Tile[],
   removed: ReadonlySet<number>,
-  tray: readonly number[],
-  trayCapacity: number,
-  id: number,
-): TapResult {
-  const nextRemoved = new Set(removed);
-  nextRemoved.add(id);
-  let nextTray = [...tray, id];
-
+  firstId: number,
+  secondId: number,
+): MatchResult | null {
+  if (firstId === secondId) return null;
   const byId = new Map(tiles.map((t) => [t.id, t]));
-  const counts = new Map<string, number>();
-  for (const tid of nextTray) {
-    const key = variantKey(byId.get(tid)!.variant);
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-  const matchKey = Array.from(counts.entries()).find(([, count]) => count >= 3)?.[0];
-  if (matchKey) {
-    let toRemove = 3;
-    nextTray = nextTray.filter((tid) => {
-      if (toRemove > 0 && variantKey(byId.get(tid)!.variant) === matchKey) {
-        toRemove--;
-        return false;
-      }
-      return true;
-    });
-  }
+  const a = byId.get(firstId);
+  const b = byId.get(secondId);
+  if (!a || !b || variantKey(a.variant) !== variantKey(b.variant)) return null;
 
-  let stage: TapResult['stage'] = 'playing';
+  const free = computeFree(tiles, removed);
+  if (!free.has(firstId) || !free.has(secondId)) return null;
+
+  const nextRemoved = new Set(removed);
+  nextRemoved.add(firstId);
+  nextRemoved.add(secondId);
+
+  let stage: MatchResult['stage'] = 'playing';
   if (nextRemoved.size === tiles.length) stage = 'levelCleared';
-  else if (nextTray.length >= trayCapacity) stage = 'lost';
+  else if (!hasAvailableMove(tiles, nextRemoved)) stage = 'lost';
 
-  return { removed: nextRemoved, tray: nextTray, stage };
+  return { removed: nextRemoved, stage };
 }

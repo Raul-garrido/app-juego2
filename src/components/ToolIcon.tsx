@@ -73,7 +73,7 @@ const PHOTOS: Record<ToolVariant['shape'], string> = {
   soldador,
 };
 
-export function ToolIcon({ variant, size = 34 }: { variant: ToolVariant; size?: number }) {
+export function ToolIcon({ variant, size = 30 }: { variant: ToolVariant; size?: number }) {
   const hue = VARIANT_HUES[variant.colorIndex % VARIANT_HUES.length];
   const filter = hue === 0 ? 'none' : `hue-rotate(${hue}deg) saturate(1.35)`;
   return (

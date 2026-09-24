@@ -1,27 +1,42 @@
 import { useMemo, useState } from 'react';
 import { generateLevel } from '../game/levelGenerator';
-import { computeExposed, tapTile } from '../game/gameLogic';
+import { computeFree, resolvePair } from '../game/gameLogic';
 import { panelBackgroundFor } from '../game/backgrounds';
 import type { Stage } from '../game/types';
 import { TileButton } from './TileButton';
-import { Tray } from './Tray';
 
 export function GameScreen() {
   const [levelIndex, setLevelIndex] = useState(0);
   const [level, setLevel] = useState(() => generateLevel(0));
   const [removed, setRemoved] = useState<Set<number>>(new Set());
-  const [tray, setTray] = useState<number[]>([]);
+  const [selected, setSelected] = useState<number | null>(null);
   const [stage, setStage] = useState<Stage>('playing');
 
-  const tilesById = useMemo(() => new Map(level.tiles.map((t) => [t.id, t])), [level]);
-  const exposed = useMemo(() => computeExposed(level.tiles, removed), [level, removed]);
+  const free = useMemo(() => computeFree(level.tiles, removed), [level, removed]);
   const pileLeft = level.tiles.length - removed.size;
 
   function handleTap(id: number) {
     if (stage !== 'playing') return;
-    const result = tapTile(level.tiles, removed, tray, level.trayCapacity, id);
+
+    if (selected === null) {
+      setSelected(id);
+      return;
+    }
+    if (selected === id) {
+      setSelected(null);
+      return;
+    }
+
+    const result = resolvePair(level.tiles, removed, selected, id);
+    if (!result) {
+      // Not a match: treat the new tap as a fresh first pick instead of
+      // silently ignoring it, so the wrong tap still feels responsive.
+      setSelected(id);
+      return;
+    }
+
     setRemoved(result.removed);
-    setTray(result.tray);
+    setSelected(null);
     setStage(result.stage);
   }
 
@@ -30,7 +45,7 @@ export function GameScreen() {
     setLevelIndex(index);
     setLevel(next);
     setRemoved(new Set());
-    setTray([]);
+    setSelected(null);
     setStage('playing');
   }
 
@@ -59,28 +74,28 @@ export function GameScreen() {
       </div>
       <div className="hud hud--secondary">
         <span>{pileLeft} fichas</span>
-        <span>
-          {tray.length} / {level.trayCapacity} bandeja
-        </span>
       </div>
 
       {stage === 'playing' && (
-        <>
-          <div className="pile" style={{ height: level.pileHeight }}>
-            {level.tiles
-              .filter((t) => !removed.has(t.id))
-              .map((tile) => (
-                <TileButton key={tile.id} tile={tile} exposed={exposed.has(tile.id)} onTap={handleTap} />
-              ))}
-          </div>
-          <Tray tray={tray} capacity={level.trayCapacity} tilesById={tilesById} />
-        </>
+        <div className="pile" style={{ width: level.pileWidth, height: level.pileHeight }}>
+          {level.tiles
+            .filter((t) => !removed.has(t.id))
+            .map((tile) => (
+              <TileButton
+                key={tile.id}
+                tile={tile}
+                free={free.has(tile.id)}
+                selected={selected === tile.id}
+                onTap={handleTap}
+              />
+            ))}
+        </div>
       )}
 
       {stage === 'levelCleared' && (
         <div className="card card--win">
           <span className="card__title">NIVEL SUPERADO</span>
-          <p className="card__body">Vaciaste el taller. El siguiente nivel mezcla mas herramientas.</p>
+          <p className="card__body">Vaciaste el tablero. El siguiente nivel añade más capas.</p>
           <button className="card__button" onClick={nextLevel}>
             Siguiente nivel
           </button>
@@ -89,8 +104,8 @@ export function GameScreen() {
 
       {stage === 'lost' && (
         <div className="card card--lost">
-          <span className="card__title">BANDEJA LLENA</span>
-          <p className="card__body">Sin hueco para mas fichas. Prueba otro orden.</p>
+          <span className="card__title">SIN MOVIMIENTOS</span>
+          <p className="card__body">No quedan parejas libres para juntar. Prueba otro orden.</p>
           <button className="card__button" onClick={retryLevel}>
             Reintentar nivel
           </button>
