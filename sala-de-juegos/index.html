@@ -427,8 +427,8 @@ function boot() {
    * The anon key is meant to be public (it's restricted by the row-level
    * security policies on the `scores` table), so it's fine to ship it in
    * this static file. */
-  const SUPABASE_URL = 'REPLACE_WITH_SUPABASE_PROJECT_URL';
-  const SUPABASE_ANON_KEY = 'REPLACE_WITH_SUPABASE_ANON_KEY';
+  const SUPABASE_URL = 'https://oxudofhasyggbwjkoroq.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_-p9mU4HawuHcgqo6-wphvw_5xJzTYUX';
   const sb = (SUPABASE_URL.startsWith('http') && window.supabase)
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
