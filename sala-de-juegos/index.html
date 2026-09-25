@@ -767,9 +767,9 @@ function boot() {
   const photoPreview = document.getElementById('login-photo-preview');
   const photoPlaceholder = document.getElementById('login-photo-placeholder');
   const modelGrid = document.getElementById('model-grid');
-  modelGrid.innerHTML = AVATAR_MODELS.map((m) =>
+  modelGrid.innerHTML = AVATAR_MODELS.map((m, i) =>
     '<button type="button" class="model-pick" data-model="' + m.id + '">' +
-    funkoSvgMarkup(m, '#b9b4c9', null, '', 46) +
+    funkoSvgMarkup(m, AVATAR_COLORS[i % AVATAR_COLORS.length], null, '', 46) +
     '<span>' + escapeHtml(m.label) + '</span></button>'
   ).join('');
   const modelButtons = modelGrid.querySelectorAll('.model-pick');
@@ -857,17 +857,24 @@ function boot() {
     } catch {}
     renderPlayerChip();
     hideLogin();
+    // Update locally right away instead of waiting on Supabase's round
+    // trip (or its realtime subscription), so your own screen reflects
+    // the model/photo you just picked immediately either way.
+    allPlayers.set(slugify(playerName), { player: playerName, photo: playerPhoto || null, gender: playerGender || null });
     renderBoard();
     if (sb) {
       try {
-        await sb.from('players').upsert({
+        const { error } = await sb.from('players').upsert({
           id: slugify(playerName),
           player: playerName,
           photo: playerPhoto || null,
           gender: playerGender || null,
           updated_at: new Date().toISOString(),
         });
-      } catch {}
+        if (error) throw error;
+      } catch (e) {
+        showToast('No se pudo guardar tu perfil (' + (e && e.message ? e.message : 'error') + ')');
+      }
     }
   }
   loginBtn.addEventListener('click', commitLogin);
@@ -1044,9 +1051,16 @@ function boot() {
     renderBoard();
   }
 
+  let playersFetchErrorShown = false;
   async function refetchPlayers() {
     const { data, error } = await sb.from('players').select('*');
-    if (error) return;
+    if (error) {
+      if (!playersFetchErrorShown) {
+        playersFetchErrorShown = true;
+        showToast('No se pudieron cargar los perfiles (' + error.message + ')');
+      }
+      return;
+    }
     allPlayers = new Map(data.map((row) => [row.id, { player: row.player, photo: row.photo, gender: row.gender }]));
     renderBoard();
   }
