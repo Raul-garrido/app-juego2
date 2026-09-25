@@ -293,8 +293,18 @@
 
   /* ---------- game view ---------- */
   .game-view {
-    max-width: 460px;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: var(--bg);
+  }
+  .game-view-inner {
+    height: 100%;
+    max-width: 520px;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding: max(10px, env(safe-area-inset-top, 0px)) 10px max(10px, env(safe-area-inset-bottom, 0px));
   }
   .game-bar {
     display: flex;
@@ -305,6 +315,7 @@
     border: 1px solid var(--line);
     border-radius: 14px;
     margin-bottom: 10px;
+    flex-shrink: 0;
   }
   .back-btn {
     background: var(--panel-2);
@@ -329,7 +340,8 @@
     overflow: hidden;
     border: 1px solid var(--line);
     background: #000;
-    height: min(78vh, 820px);
+    flex: 1;
+    min-height: 0;
   }
   .game-frame-wrap iframe { width: 100%; height: 100%; border: 0; display: block; }
   .frame-loading {
@@ -405,14 +417,16 @@
   </div>
 
   <div class="game-view" id="game-view" hidden>
-    <div class="game-bar">
-      <button class="back-btn" id="back-btn" aria-label="Volver">←</button>
-      <span class="title" id="game-view-title"></span>
-      <span class="timer" id="game-view-timer">00:00</span>
-    </div>
-    <div class="game-frame-wrap">
-      <div class="frame-loading" id="frame-loading">Cargando…</div>
-      <iframe id="game-frame" hidden title="Juego"></iframe>
+    <div class="game-view-inner">
+      <div class="game-bar">
+        <button class="back-btn" id="back-btn" aria-label="Volver">←</button>
+        <span class="title" id="game-view-title"></span>
+        <span class="timer" id="game-view-timer">00:00</span>
+      </div>
+      <div class="game-frame-wrap">
+        <div class="frame-loading" id="frame-loading">Cargando…</div>
+        <iframe id="game-frame" hidden title="Juego"></iframe>
+      </div>
     </div>
   </div>
 </div>
