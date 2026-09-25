@@ -1,8 +1,10 @@
 -- Run this once in the Supabase project's SQL Editor.
+-- Safe to run more than once (won't error if you already ran an earlier
+-- version of this file) - useful if you're not sure what you already ran.
 -- Public, anonymous read/write: fine for a casual shared leaderboard,
 -- not meant to resist a malicious player.
 
-create table scores (
+create table if not exists scores (
   id text primary key,
   player text not null,
   player_slug text not null,
@@ -19,10 +21,23 @@ create table scores (
 
 alter table scores enable row level security;
 
+drop policy if exists "public read" on scores;
 create policy "public read" on scores for select using (true);
+
+drop policy if exists "public insert" on scores;
 create policy "public insert" on scores for insert with check (true);
+
+drop policy if exists "public update" on scores;
 create policy "public update" on scores for update using (true) with check (true);
 
 -- Needed for the leaderboard to update live on everyone's screen without a
 -- reload (Supabase Realtime only streams tables you explicitly publish).
-alter publication supabase_realtime add table scores;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'scores'
+  ) then
+    alter publication supabase_realtime add table scores;
+  end if;
+end $$;
