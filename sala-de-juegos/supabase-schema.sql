@@ -41,3 +41,36 @@ begin
     alter publication supabase_realtime add table scores;
   end if;
 end $$;
+
+-- Player profiles: name + optional photo + doll body style, keyed by the
+-- same player_slug used in scores. The photo is stored as a small
+-- compressed data URL (resized client-side before upload), not a file -
+-- simplest option, no separate Storage bucket/policies to set up.
+create table if not exists players (
+  id text primary key,
+  player text not null,
+  photo text,
+  gender text,
+  updated_at timestamptz not null default now()
+);
+
+alter table players enable row level security;
+
+drop policy if exists "public read players" on players;
+create policy "public read players" on players for select using (true);
+
+drop policy if exists "public insert players" on players;
+create policy "public insert players" on players for insert with check (true);
+
+drop policy if exists "public update players" on players;
+create policy "public update players" on players for update using (true) with check (true);
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'players'
+  ) then
+    alter publication supabase_realtime add table players;
+  end if;
+end $$;
