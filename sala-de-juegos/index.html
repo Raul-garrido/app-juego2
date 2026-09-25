@@ -650,21 +650,40 @@ function boot() {
   let dbState = 'loading'; // loading | ready | unavailable
   let allScores = [];
 
+  // Points reward reaching further levels, not just finishing an early
+  // one fast: a raw "best time" leaderboard always favours whoever
+  // blitzed an easy level, never real progress. Stars still count, as a
+  // bonus on top of the level reached.
+  // null means "not a plain campaign level number" (e.g. a daily-challenge
+  // key like "diario-2026-09-25") - concatenating its digits would fake a
+  // huge level number, so those get a flat point baseline instead below.
+  function levelNumberOf(level) {
+    if (typeof level === 'number') return level;
+    const s = String(level);
+    return /^\d+$/.test(s) ? parseInt(s, 10) : null;
+  }
+  function pointsForEntry(s) {
+    const lvl = levelNumberOf(s.level);
+    const base = lvl != null ? lvl * 10 : 50;
+    return base + (s.stars || 0) * 20;
+  }
   function aggregate(scores, scope) {
     const filtered = scope === 'general' ? scores : scores.filter((s) => s.game === scope);
     const byPlayer = new Map();
     for (const s of filtered) {
       const key = s.playerSlug;
       if (!byPlayer.has(key)) {
-        byPlayer.set(key, { player: s.player, totalStars: 0, levelsCompleted: 0, bestTime: Infinity });
+        byPlayer.set(key, { player: s.player, totalPoints: 0, totalStars: 0, levelsCompleted: 0, maxLevel: 0 });
       }
       const agg = byPlayer.get(key);
       agg.player = s.player;
+      agg.totalPoints += pointsForEntry(s);
       agg.totalStars += s.stars || 0;
       agg.levelsCompleted += 1;
-      if (typeof s.timeSeconds === 'number') agg.bestTime = Math.min(agg.bestTime, s.timeSeconds);
+      const lvl = levelNumberOf(s.level);
+      if (lvl != null) agg.maxLevel = Math.max(agg.maxLevel, lvl);
     }
-    return Array.from(byPlayer.values()).sort((a, b) => b.totalStars - a.totalStars || a.bestTime - b.bestTime);
+    return Array.from(byPlayer.values()).sort((a, b) => b.totalPoints - a.totalPoints);
   }
 
   function renderBoard() {
@@ -719,9 +738,8 @@ function boot() {
     boardBody.innerHTML = html;
   }
   function statLabel(r) {
-    const stars = '★'.repeat(Math.min(r.totalStars, 99));
-    const time = isFinite(r.bestTime) ? ' · mejor ' + formatTime(r.bestTime) : '';
-    return '<span class="stars">' + (stars || '—') + '</span>' + (stars ? ' (' + r.totalStars + ')' : '') + time;
+    return 'Nivel ' + r.maxLevel + ' · ' + r.totalPoints + ' pts <span class="stars">(' +
+      '★'.repeat(Math.min(r.totalStars, 99)) + ')</span>';
   }
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
