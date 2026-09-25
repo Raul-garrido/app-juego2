@@ -158,6 +158,18 @@
     border-radius: 12px;
   }
   .btn-primary:disabled { opacity: 0.5; cursor: default; }
+  .btn-secondary {
+    width: 100%;
+    background: none;
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    font-weight: 700;
+    font-size: 14px;
+    padding: 11px;
+    border-radius: 12px;
+    margin-top: 8px;
+  }
+  #win-summary { font-size: 15px; color: var(--ink); font-weight: 700; }
 
   /* ---------- leaderboard ---------- */
   .board-section {
@@ -412,6 +424,16 @@
     <p>Escribe tu nombre para aparecer en la clasificación. Se recuerda en este dispositivo.</p>
     <input id="login-input" type="text" maxlength="18" placeholder="Tu nombre" autocomplete="off" />
     <button class="btn-primary" id="login-btn">Jugar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="win-overlay" hidden>
+  <div class="modal">
+    <div class="emoji">🎉</div>
+    <h2>¡Nivel superado!</h2>
+    <p id="win-summary"></p>
+    <button class="btn-primary" id="win-continue-btn">Seguir jugando</button>
+    <button class="btn-secondary" id="win-stop-btn">Terminar partida</button>
   </div>
 </div>
 
@@ -807,6 +829,17 @@ function boot() {
   const gameViewTitle = document.getElementById('game-view-title');
   const gameViewTimer = document.getElementById('game-view-timer');
   const backBtn = document.getElementById('back-btn');
+  const winOverlay = document.getElementById('win-overlay');
+  const winSummary = document.getElementById('win-summary');
+  const winContinueBtn = document.getElementById('win-continue-btn');
+  const winStopBtn = document.getElementById('win-stop-btn');
+
+  function showWinPrompt(level, stars, elapsedSeconds) {
+    winSummary.textContent = 'Nivel ' + level + ' · ' + '★'.repeat(stars) + ' · ' + formatTime(elapsedSeconds);
+    winOverlay.hidden = false;
+  }
+  winContinueBtn.addEventListener('click', () => { winOverlay.hidden = true; });
+  winStopBtn.addEventListener('click', () => { winOverlay.hidden = true; closeGame(); });
 
   const htmlCache = {};
   let currentGame = null;
@@ -817,6 +850,7 @@ function boot() {
     if (!playerName) { showLogin(); return; }
     currentGame = game;
     trackState = null;
+    winOverlay.hidden = true;
     hubView.hidden = true;
     boardSection.hidden = true;
     gameView.hidden = false;
@@ -850,6 +884,7 @@ function boot() {
     if (pollHandle) { clearInterval(pollHandle); pollHandle = null; }
     currentGame = null;
     trackState = null;
+    winOverlay.hidden = true;
     gameFrame.srcdoc = 'about:blank';
     gameFrame.hidden = true;
     gameView.hidden = true;
@@ -889,6 +924,7 @@ function boot() {
       try { stars = adapter.computeStars({ raw, api, level, trackState }); } catch {}
       stars = Math.max(1, Math.min(3, Math.round(stars)));
       submitScore(currentGame, level, elapsed, stars);
+      showWinPrompt(level, stars, elapsed);
       trackState.lastStatus = 'won';
     } else {
       trackState.lastStatus = status;
