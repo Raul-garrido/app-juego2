@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#f4f1ea" />
+<title>Sala de Juegos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --panel: #ffffff;
+    --panel-2: #eef0f6;
+    --ink: #171522;
+    --ink-dim: #5c5870;
+    --line: #e1ddf0;
+    --accent: #6c4cf5;
+    --accent-ink: #ffffff;
+    --gold: #e8a93b;
+    --silver: #a7adba;
+    --bronze: #c07a4a;
+    --danger: #d9534f;
+    --ok: #3fa66b;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d0e16;
+      --panel: #171a26;
+      --panel-2: #1e2233;
+      --ink: #eef0fb;
+      --ink-dim: #9498b3;
+      --line: #2a2e44;
+      --accent: #8f7bff;
+      --accent-ink: #0d0e16;
+      --gold: #f0b94a;
+      --silver: #b7bccb;
+      --bronze: #d1895a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d0e16;
+    --panel: #171a26;
+    --panel-2: #1e2233;
+    --ink: #eef0fb;
+    --ink-dim: #9498b3;
+    --line: #2a2e44;
+    --accent: #8f7bff;
+    --accent-ink: #0d0e16;
+    --gold: #f0b94a;
+    --silver: #b7bccb;
+    --bronze: #d1895a;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    padding-inline: 16px;
+    padding-block: 22px 50px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Nunito', system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  button { font-family: inherit; cursor: pointer; }
+  h1, h2, h3 { font-family: 'Baloo 2', sans-serif; margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+
+  /* ---------- header ---------- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-badge {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: linear-gradient(155deg, var(--accent), #b39bff);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 10px -4px color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+  .brand h1 { font-size: 22px; font-weight: 800; letter-spacing: 0.01em; }
+  .player-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 6px 5px 5px;
+  }
+  .avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .player-chip .name { font-weight: 700; font-size: 13.5px; }
+  .player-chip .change-btn {
+    background: none; border: none; color: var(--ink-dim);
+    font-size: 12px; text-decoration: underline; padding: 2px 4px 2px 0;
+  }
+
+  /* ---------- login modal ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: color-mix(in srgb, var(--bg) 75%, transparent);
+    backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 28px 24px;
+    max-width: 340px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.4);
+  }
+  .modal .emoji { font-size: 38px; margin-bottom: 6px; }
+  .modal h2 { font-size: 21px; margin-bottom: 6px; }
+  .modal p { color: var(--ink-dim); font-size: 13.5px; margin: 0 0 18px; line-height: 1.5; }
+  .modal input {
+    width: 100%;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 2px solid var(--line);
+    background: var(--panel-2);
+    color: var(--ink);
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .modal input:focus { outline: none; border-color: var(--accent); }
+  .btn-primary {
+    width: 100%;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: none;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+  .btn-primary:disabled { opacity: 0.5; cursor: default; }
+
+  /* ---------- leaderboard ---------- */
+  .board-section {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 18px 16px 20px;
+    margin-bottom: 22px;
+  }
+  .board-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .board-head h2 { font-size: 18px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 12.5px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--ink-dim);
+  }
+  .tab.is-active {
+    background: var(--tab-color, var(--accent));
+    border-color: var(--tab-color, var(--accent));
+    color: #fff;
+  }
+
+  .podium {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: end;
+    gap: 8px;
+    margin: 8px 0 16px;
+  }
+  .podium-slot { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .podium-slot .avatar { width: 46px; height: 46px; font-size: 18px; }
+  .podium-slot.rank-1 .avatar { width: 58px; height: 58px; font-size: 22px; }
+  .podium-name { font-weight: 800; font-size: 12.5px; text-align: center; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .podium-stat { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .podium-bar {
+    width: 100%;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 6px;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    color: #fff;
+  }
+  .rank-1 .podium-bar { height: 74px; background: linear-gradient(160deg, var(--gold), color-mix(in srgb, var(--gold) 70%, black)); font-size: 20px; }
+  .rank-2 .podium-bar { height: 52px; background: linear-gradient(160deg, var(--silver), color-mix(in srgb, var(--silver) 70%, black)); font-size: 17px; }
+  .rank-3 .podium-bar { height: 38px; background: linear-gradient(160deg, var(--bronze), color-mix(in srgb, var(--bronze) 70%, black)); font-size: 17px; }
+
+  .rank-list { display: flex; flex-direction: column; gap: 6px; }
+  .rank-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: var(--panel-2);
+  }
+  .rank-row.is-you { outline: 2px solid var(--accent); }
+  .rank-num { width: 20px; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--ink-dim); font-size: 12.5px; flex-shrink: 0; }
+  .rank-row .avatar { width: 30px; height: 30px; font-size: 12.5px; }
+  .rank-row .name { font-weight: 700; font-size: 13.5px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rank-row .stat { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-dim); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .rank-row .stars { color: var(--gold); letter-spacing: 1px; }
+
+  .board-empty {
+    text-align: center;
+    padding: 22px 10px;
+    color: var(--ink-dim);
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .board-status {
+    text-align: center;
+    padding: 10px;
+    color: var(--ink-dim);
+    font-size: 12px;
+  }
+
+  /* ---------- games grid ---------- */
+  .games-head { margin-bottom: 12px; }
+  .games-head h2 { font-size: 18px; }
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    align-items: start;
+  }
+  .game-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 5px solid var(--card-color, var(--accent));
+  }
+  .game-card .icon { font-size: 30px; }
+  .game-card h3 { font-size: 17px; }
+  .game-card p { margin: 0; color: var(--ink-dim); font-size: 13px; line-height: 1.45; flex: 1; }
+  .game-card .play-btn {
+    margin-top: 4px;
+    background: var(--card-color, var(--accent));
+    color: #fff;
+    border: none;
+    font-weight: 800;
+    font-size: 13.5px;
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  /* ---------- game view ---------- */
+  .game-view {
+    max-width: 460px;
+    margin: 0 auto;
+  }
+  .game-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    margin-bottom: 10px;
+  }
+  .back-btn {
+    background: var(--panel-2);
+    border: none;
+    border-radius: 10px;
+    width: 34px; height: 34px;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .game-bar .title { font-weight: 800; font-size: 14px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .game-bar .timer {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13.5px;
+    background: var(--panel-2);
+    padding: 5px 9px;
+    border-radius: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .game-frame-wrap {
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: #000;
+    height: min(78vh, 820px);
+  }
+  .game-frame-wrap iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .frame-loading {
+    color: var(--ink-dim);
+    text-align: center;
+    padding-top: 40%;
+    font-size: 13px;
+  }
+
+  /* ---------- toast ---------- */
+  .toast-stack {
+    position: fixed;
+    left: 50%;
+    bottom: max(18px, env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 200;
+    width: min(360px, calc(100vw - 32px));
+  }
+  .toast {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: 0 10px 24px -10px rgba(0,0,0,0.5);
+    animation: toast-in 0.2s ease;
+  }
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 480px) {
+    .games-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-badge">🕹️</div>
+      <h1>Sala de Juegos</h1>
+    </div>
+    <div class="player-chip" id="player-chip" hidden>
+      <div class="avatar" id="player-avatar"></div>
+      <span class="name" id="player-name-label"></span>
+      <button class="change-btn" id="change-name-btn">cambiar</button>
+    </div>
+  </div>
+
+  <section class="board-section" id="board-section">
+    <div class="board-head">
+      <h2>🏆 Clasificación</h2>
+      <div class="tabs" id="board-tabs"></div>
+    </div>
+    <div id="board-body">
+      <p class="board-status">Cargando clasificación…</p>
+    </div>
+  </section>
+
+  <div id="hub-view">
+    <div class="games-head">
+      <h2>Elige un juego</h2>
+    </div>
+    <div class="games-grid" id="games-grid"></div>
+  </div>
+
+  <div class="game-view" id="game-view" hidden>
+    <div class="game-bar">
+      <button class="back-btn" id="back-btn" aria-label="Volver">←</button>
+      <span class="title" id="game-view-title"></span>
+      <span class="timer" id="game-view-timer">00:00</span>
+    </div>
+    <div class="game-frame-wrap">
+      <div class="frame-loading" id="frame-loading">Cargando…</div>
+      <iframe id="game-frame" hidden title="Juego"></iframe>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="login-overlay">
+  <div class="modal">
+    <div class="emoji">👋</div>
+    <h2>¿Quién juega?</h2>
+    <p>Escribe tu nombre para aparecer en la clasificación. Se recuerda en este dispositivo.</p>
+    <input id="login-input" type="text" maxlength="18" placeholder="Tu nombre" autocomplete="off" />
+    <button class="btn-primary" id="login-btn">Jugar</button>
+  </div>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+function boot() {
+
+  /* ================= backend (Supabase) =================
+   * Fill these in with your project's values: Supabase dashboard ->
+   * Project Settings -> API -> "Project URL" and "anon public" key.
+   * The anon key is meant to be public (it's restricted by the row-level
+   * security policies on the `scores` table), so it's fine to ship it in
+   * this static file. */
+  const SUPABASE_URL = 'REPLACE_WITH_SUPABASE_PROJECT_URL';
+  const SUPABASE_ANON_KEY = 'REPLACE_WITH_SUPABASE_ANON_KEY';
+  const sb = (SUPABASE_URL.startsWith('http') && window.supabase)
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
+  /* ================= config ================= */
+  const GAMES = [
+    {
+      id: 'patrulla',
+      title: 'Patrulla Express',
+      subtitle: 'Saca los coches del atasco antes de que se acabe el tiempo.',
+      icon: '🚓',
+      color: '#f2994a',
+      file: 'games/patrulla.html',
+    },
+    {
+      id: 'gatodoku',
+      title: 'Gatodoku',
+      subtitle: 'Sudoku de gatos: coloca cada uno en su fila y columna.',
+      icon: '🐱',
+      color: '#ec6fae',
+      file: 'games/gatodoku.html',
+    },
+    {
+      id: 'bloque',
+      title: 'Encaja el Bloque',
+      subtitle: 'Desliza los bloques hasta sacarlos por la salida de su color.',
+      icon: '🧩',
+      color: '#4fb8c4',
+      file: 'games/bloque.html',
+    },
+  ];
+
+  const ADAPTERS = {
+    patrulla: {
+      read(win) {
+        const api = win.__patrulla;
+        if (!api) return null;
+        let s;
+        try { s = api.estado(); } catch { return null; }
+        if (!s) return null;
+        const status = s.estado === 'ganado' ? 'won' : s.estado === 'perdido' ? 'lost' : 'playing';
+        return { status, level: s.nivel, raw: s, api };
+      },
+      computeStars(ctx) {
+        const budget = ctx.trackState && ctx.trackState.budgetSeconds;
+        if (!budget || !ctx.raw || typeof ctx.raw.segundos !== 'number') return 2;
+        const frac = ctx.raw.segundos / budget;
+        return frac >= 0.5 ? 3 : frac >= 0.15 ? 2 : 1;
+      },
+    },
+    gatodoku: {
+      read(win) {
+        const api = win.__gatodoku;
+        if (!api) return null;
+        let s;
+        try { s = api.estado(); } catch { return null; }
+        if (!s) return null;
+        const status = s.estado === 'ganada' ? 'won' : s.estado === 'perdida' ? 'lost' : 'playing';
+        const level = s.modo && s.modo.tipo === 'campana' ? s.modo.nivel
+          : (s.modo && s.modo.clave ? 'diario-' + s.modo.clave : null);
+        return { status, level, raw: s, api };
+      },
+      computeStars(ctx) {
+        try {
+          const prog = ctx.api.progreso();
+          const lvl = ctx.level;
+          if (prog && prog.estrellas && typeof lvl === 'number' && prog.estrellas[lvl] != null) {
+            return prog.estrellas[lvl];
+          }
+        } catch {}
+        return 2;
+      },
+    },
+    bloque: {
+      read(win) {
+        const api = win.__encaja;
+        if (!api) return null;
+        let s;
+        try { s = api.estado(); } catch { return null; }
+        if (!s) return null;
+        const status = s.estado === 'won' ? 'won' : s.estado === 'lost' ? 'lost' : 'playing';
+        return { status, level: s.nivel, raw: s, api };
+      },
+      computeStars(ctx) {
+        const r = ctx.raw;
+        if (!r || r.par == null || r.limite == null || r.movimientos == null) return 2;
+        if (r.movimientos <= r.par) return 3;
+        const n = r.limite - r.par;
+        return r.movimientos <= r.par + Math.ceil(n / 2) ? 2 : 1;
+      },
+    },
+  };
+
+  const AVATAR_COLORS = ['#6c4cf5', '#f2994a', '#ec6fae', '#4fb8c4', '#3fa66b', '#d9534f', '#a7adba', '#e8a93b'];
+  function colorForName(name) {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    return AVATAR_COLORS[h % AVATAR_COLORS.length];
+  }
+  function initialsFor(name) {
+    return (name || '?').trim().slice(0, 2).toUpperCase();
+  }
+  function slugify(name) {
+    return (name || 'jugador')
+      .toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40) || 'jugador';
+  }
+  function pathSafe(s) {
+    return String(s).replace(/[^a-zA-Z0-9_\-.~:@+]/g, '-');
+  }
+  function formatTime(totalSeconds) {
+    const s = Math.max(0, Math.round(totalSeconds));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
+  }
+  function rowToScore(row) {
+    return {
+      player: row.player,
+      playerSlug: row.player_slug,
+      game: row.game,
+      gameTitle: row.game_title,
+      level: row.level,
+      timeSeconds: Number(row.time_seconds),
+      stars: Number(row.stars),
+    };
+  }
+
+  /* ================= player / login ================= */
+  const PLAYER_KEY = 'sala-de-juegos:player-name';
+  let playerName = '';
+  try { playerName = localStorage.getItem(PLAYER_KEY) || ''; } catch {}
+
+  const loginOverlay = document.getElementById('login-overlay');
+  const loginInput = document.getElementById('login-input');
+  const loginBtn = document.getElementById('login-btn');
+  const playerChip = document.getElementById('player-chip');
+  const playerAvatar = document.getElementById('player-avatar');
+  const playerNameLabel = document.getElementById('player-name-label');
+
+  function renderPlayerChip() {
+    if (!playerName) { playerChip.hidden = true; return; }
+    playerChip.hidden = false;
+    playerAvatar.style.background = colorForName(playerName);
+    playerAvatar.textContent = initialsFor(playerName);
+    playerNameLabel.textContent = playerName;
+  }
+  function showLogin() {
+    loginOverlay.hidden = false;
+    loginInput.value = playerName || '';
+    setTimeout(() => loginInput.focus(), 50);
+  }
+  function hideLogin() { loginOverlay.hidden = true; }
+  function commitLogin() {
+    const v = loginInput.value.trim().slice(0, 18);
+    if (!v) return;
+    playerName = v;
+    try { localStorage.setItem(PLAYER_KEY, v); } catch {}
+    renderPlayerChip();
+    hideLogin();
+    renderBoard();
+  }
+  loginBtn.addEventListener('click', commitLogin);
+  loginInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') commitLogin(); });
+  document.getElementById('change-name-btn').addEventListener('click', showLogin);
+
+  if (playerName) { renderPlayerChip(); hideLogin(); } else { showLogin(); }
+
+  /* ================= toasts ================= */
+  const toastStack = document.getElementById('toast-stack');
+  function showToast(msg) {
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    toastStack.appendChild(el);
+    setTimeout(() => el.remove(), 3600);
+  }
+
+  /* ================= games grid ================= */
+  const gamesGrid = document.getElementById('games-grid');
+  GAMES.forEach((g) => {
+    const card = document.createElement('article');
+    card.className = 'game-card';
+    card.style.setProperty('--card-color', g.color);
+    card.innerHTML =
+      '<span class="icon">' + g.icon + '</span>' +
+      '<h3>' + g.title + '</h3>' +
+      '<p>' + g.subtitle + '</p>' +
+      '<button class="play-btn">Jugar</button>';
+    card.querySelector('.play-btn').addEventListener('click', () => openGame(g));
+    gamesGrid.appendChild(card);
+  });
+
+  /* ================= leaderboard tabs ================= */
+  const boardTabs = document.getElementById('board-tabs');
+  const boardBody = document.getElementById('board-body');
+  let activeTab = 'general';
+
+  function buildTabs() {
+    boardTabs.innerHTML = '';
+    const defs = [{ id: 'general', label: 'General', color: null }].concat(
+      GAMES.map((g) => ({ id: g.id, label: g.title, color: g.color }))
+    );
+    defs.forEach((d) => {
+      const b = document.createElement('button');
+      b.className = 'tab' + (d.id === activeTab ? ' is-active' : '');
+      if (d.color) b.style.setProperty('--tab-color', d.color);
+      b.textContent = d.label;
+      b.addEventListener('click', () => { activeTab = d.id; buildTabs(); renderBoard(); });
+      boardTabs.appendChild(b);
+    });
+  }
+  buildTabs();
+
+  /* ================= leaderboard data (Supabase) ================= */
+  let dbState = 'loading'; // loading | ready | unavailable
+  let allScores = [];
+
+  function aggregate(scores, scope) {
+    const filtered = scope === 'general' ? scores : scores.filter((s) => s.game === scope);
+    const byPlayer = new Map();
+    for (const s of filtered) {
+      const key = s.playerSlug;
+      if (!byPlayer.has(key)) {
+        byPlayer.set(key, { player: s.player, totalStars: 0, levelsCompleted: 0, bestTime: Infinity });
+      }
+      const agg = byPlayer.get(key);
+      agg.player = s.player;
+      agg.totalStars += s.stars || 0;
+      agg.levelsCompleted += 1;
+      if (typeof s.timeSeconds === 'number') agg.bestTime = Math.min(agg.bestTime, s.timeSeconds);
+    }
+    return Array.from(byPlayer.values()).sort((a, b) => b.totalStars - a.totalStars || a.bestTime - b.bestTime);
+  }
+
+  function renderBoard() {
+    if (dbState === 'loading') {
+      boardBody.innerHTML = '<p class="board-status">Cargando clasificación…</p>';
+      return;
+    }
+    if (dbState === 'unavailable') {
+      boardBody.innerHTML =
+        '<p class="board-empty">La clasificación compartida no está disponible ahora mismo. ' +
+        'Los juegos funcionan igual, pero los resultados no se guardarán hasta que vuelva la conexión.</p>';
+      return;
+    }
+    const rows = aggregate(allScores, activeTab);
+    if (rows.length === 0) {
+      boardBody.innerHTML = '<p class="board-empty">Todavía no hay resultados aquí.<br>Juega algo abajo y sé el primero en aparecer 🏁</p>';
+      return;
+    }
+    const top3 = rows.slice(0, 3);
+    const rest = rows.slice(3, 10);
+
+    let html = '<div class="podium">';
+    const order = [1, 0, 2]; // visual order: 2nd, 1st, 3rd
+    order.forEach((idx) => {
+      const r = top3[idx];
+      if (!r) { html += '<div></div>'; return; }
+      const rank = idx + 1;
+      html +=
+        '<div class="podium-slot rank-' + rank + '">' +
+        '<div class="avatar" style="background:' + colorForName(r.player) + '">' + initialsFor(r.player) + '</div>' +
+        '<div class="podium-name">' + escapeHtml(r.player) + '</div>' +
+        '<div class="podium-stat">' + statLabel(r) + '</div>' +
+        '<div class="podium-bar">' + rank + '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+
+    if (rest.length) {
+      html += '<div class="rank-list">';
+      rest.forEach((r, i) => {
+        const isYou = playerName && slugify(playerName) === slugify(r.player);
+        html +=
+          '<div class="rank-row' + (isYou ? ' is-you' : '') + '">' +
+          '<span class="rank-num">' + (i + 4) + '</span>' +
+          '<div class="avatar" style="background:' + colorForName(r.player) + '">' + initialsFor(r.player) + '</div>' +
+          '<span class="name">' + escapeHtml(r.player) + '</span>' +
+          '<span class="stat">' + statLabel(r) + '</span>' +
+          '</div>';
+      });
+      html += '</div>';
+    }
+    boardBody.innerHTML = html;
+  }
+  function statLabel(r) {
+    const stars = '★'.repeat(Math.min(r.totalStars, 99));
+    const time = isFinite(r.bestTime) ? ' · mejor ' + formatTime(r.bestTime) : '';
+    return '<span class="stars">' + (stars || '—') + '</span>' + (stars ? ' (' + r.totalStars + ')' : '') + time;
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  async function refetchScores() {
+    const { data, error } = await sb.from('scores').select('*');
+    if (error) { dbState = 'unavailable'; renderBoard(); return; }
+    allScores = data.map(rowToScore);
+    dbState = 'ready';
+    renderBoard();
+  }
+
+  function initDb() {
+    if (!sb) {
+      dbState = 'unavailable';
+      renderBoard();
+      return;
+    }
+    refetchScores();
+    sb.channel('scores-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'scores' }, refetchScores)
+      .subscribe();
+  }
+
+  async function submitScore(game, level, elapsedSeconds, stars) {
+    const time = Math.round(elapsedSeconds * 10) / 10;
+    if (!sb) {
+      showToast('¡Completado! ' + '★'.repeat(stars) + ' en ' + formatTime(elapsedSeconds) + ' (sin conexión a la clasificación)');
+      return;
+    }
+    const slug = slugify(playerName);
+    const id = pathSafe(game.id + '-L' + String(level) + '-' + slug);
+    try {
+      const { data: existing } = await sb.from('scores').select('*').eq('id', id).maybeSingle();
+      const better = !existing || stars > existing.stars || (stars === existing.stars && time < existing.time_seconds);
+      const row = {
+        id,
+        player: playerName,
+        player_slug: slug,
+        game: game.id,
+        game_title: game.title,
+        level: String(level),
+        time_seconds: better ? time : existing.time_seconds,
+        stars: better ? stars : existing.stars,
+        attempts: (existing && existing.attempts ? existing.attempts : 0) + 1,
+        last_time_seconds: time,
+        last_stars: stars,
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await sb.from('scores').upsert(row);
+      if (error) throw error;
+      showToast('¡Completado! ' + '★'.repeat(stars) + ' en ' + formatTime(elapsedSeconds) + (better ? ' · ¡nuevo mejor registro!' : ''));
+    } catch (e) {
+      showToast('No se pudo guardar el resultado (' + (e && e.message ? e.message : 'error') + ')');
+    }
+  }
+
+  /* ================= game launcher ================= */
+  const hubView = document.getElementById('hub-view');
+  const boardSection = document.getElementById('board-section');
+  const gameView = document.getElementById('game-view');
+  const gameFrame = document.getElementById('game-frame');
+  const frameLoading = document.getElementById('frame-loading');
+  const gameViewTitle = document.getElementById('game-view-title');
+  const gameViewTimer = document.getElementById('game-view-timer');
+  const backBtn = document.getElementById('back-btn');
+
+  const htmlCache = {};
+  let currentGame = null;
+  let trackState = null;
+  let pollHandle = null;
+
+  async function openGame(game) {
+    if (!playerName) { showLogin(); return; }
+    currentGame = game;
+    trackState = null;
+    hubView.hidden = true;
+    boardSection.hidden = true;
+    gameView.hidden = false;
+    gameViewTitle.textContent = game.title;
+    gameViewTimer.textContent = '00:00';
+    gameFrame.hidden = true;
+    frameLoading.hidden = false;
+    frameLoading.textContent = 'Cargando…';
+
+    try {
+      if (!htmlCache[game.id]) {
+        const res = await fetch(game.file);
+        if (!res.ok) throw new Error('fetch failed: ' + res.status);
+        htmlCache[game.id] = await res.text();
+      }
+      gameFrame.srcdoc = htmlCache[game.id];
+      gameFrame.onload = () => {
+        frameLoading.hidden = true;
+        gameFrame.hidden = false;
+      };
+    } catch (e) {
+      frameLoading.textContent = 'No se pudo cargar el juego.';
+      return;
+    }
+
+    if (pollHandle) clearInterval(pollHandle);
+    pollHandle = setInterval(pollGame, 300);
+  }
+
+  function closeGame() {
+    if (pollHandle) { clearInterval(pollHandle); pollHandle = null; }
+    currentGame = null;
+    trackState = null;
+    gameFrame.srcdoc = 'about:blank';
+    gameFrame.hidden = true;
+    gameView.hidden = true;
+    boardSection.hidden = false;
+    hubView.hidden = false;
+  }
+  backBtn.addEventListener('click', closeGame);
+
+  function pollGame() {
+    if (!currentGame || !gameFrame.contentWindow) return;
+    const adapter = ADAPTERS[currentGame.id];
+    let snap;
+    try { snap = adapter.read(gameFrame.contentWindow); } catch { snap = null; }
+    if (!snap) return;
+    const { status, level, raw, api } = snap;
+
+    const isNewLevel = !trackState || trackState.level !== level;
+    const isRestart = trackState && trackState.level === level && status === 'playing' &&
+      (trackState.lastStatus === 'won' || trackState.lastStatus === 'lost');
+    if (isNewLevel || isRestart) {
+      trackState = {
+        level,
+        startedAt: performance.now(),
+        lastStatus: status,
+        budgetSeconds: raw && typeof raw.segundos === 'number' ? raw.segundos : null,
+      };
+    }
+
+    if (status === 'playing') {
+      gameViewTimer.textContent = formatTime((performance.now() - trackState.startedAt) / 1000);
+    }
+
+    if (status === 'won' && trackState.lastStatus !== 'won') {
+      const elapsed = (performance.now() - trackState.startedAt) / 1000;
+      let stars = 2;
+      try { stars = adapter.computeStars({ raw, api, level, trackState }); } catch {}
+      stars = Math.max(1, Math.min(3, Math.round(stars)));
+      submitScore(currentGame, level, elapsed, stars);
+      trackState.lastStatus = 'won';
+    } else {
+      trackState.lastStatus = status;
+    }
+  }
+
+  initDb();
+}
+
+boot();
+</script>
+</body>
+</html>
