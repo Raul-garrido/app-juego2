@@ -837,6 +837,7 @@ function boot() {
     gameView.hidden = true;
     boardSection.hidden = false;
     hubView.hidden = false;
+    if (sb) refetchScores();
   }
   backBtn.addEventListener('click', closeGame);
 

@@ -22,3 +22,7 @@ alter table scores enable row level security;
 create policy "public read" on scores for select using (true);
 create policy "public insert" on scores for insert with check (true);
 create policy "public update" on scores for update using (true) with check (true);
+
+-- Needed for the leaderboard to update live on everyone's screen without a
+-- reload (Supabase Realtime only streams tables you explicitly publish).
+alter publication supabase_realtime add table scores;
