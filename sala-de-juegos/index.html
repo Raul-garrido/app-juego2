@@ -192,26 +192,39 @@
     height: 100%;
     object-fit: cover;
   }
-  .gender-pills {
-    display: flex;
+  .model-grid-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-dim);
+    margin: 0 0 6px;
+    text-align: left;
+  }
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
     margin-bottom: 14px;
   }
-  .gender-pill {
-    flex: 1;
-    padding: 9px;
-    border-radius: 10px;
+  .model-pick {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 2px 8px;
+    border-radius: 12px;
     border: 2px solid var(--line);
     background: var(--panel-2);
-    color: var(--ink-dim);
-    font-weight: 700;
-    font-size: 13.5px;
   }
-  .gender-pill.is-active {
+  .model-pick span {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink-dim);
+  }
+  .model-pick.is-active {
     border-color: var(--accent);
     background: color-mix(in srgb, var(--accent) 14%, var(--panel-2));
-    color: var(--ink);
   }
+  .model-pick.is-active span { color: var(--ink); }
 
   /* ---------- funko avatar ---------- */
   .funko-avatar { display: block; overflow: visible; }
@@ -452,6 +465,29 @@
       <circle cx="14" cy="86" r="9"/>
       <circle cx="86" cy="86" r="9"/>
     </symbol>
+    <symbol id="hair-corto" viewBox="0 0 100 130">
+      <path d="M21 28 Q17 -2 50 -2 Q83 -2 79 28 L79 16 Q79 3 50 3 Q21 3 21 16 Z"/>
+    </symbol>
+    <symbol id="hair-rizado" viewBox="0 0 100 130">
+      <circle cx="24" cy="20" r="10"/><circle cx="38" cy="8" r="11"/><circle cx="50" cy="4" r="11"/>
+      <circle cx="62" cy="8" r="11"/><circle cx="76" cy="20" r="10"/><circle cx="17" cy="32" r="8"/><circle cx="83" cy="32" r="8"/>
+    </symbol>
+    <symbol id="hair-punta" viewBox="0 0 100 130">
+      <path d="M22 24 L28 4 L34 20 L40 0 L46 18 L50 2 L54 18 L60 0 L66 20 L72 4 L78 24 Q79 15 79 15 Q79 4 50 4 Q21 4 21 15 Q21 15 22 24 Z"/>
+    </symbol>
+    <symbol id="hair-coleta" viewBox="0 0 100 130">
+      <path d="M21 28 Q17 -2 50 -2 Q83 -2 79 28 L79 16 Q79 3 50 3 Q21 3 21 16 Z"/>
+      <path d="M70 8 Q96 8 92 50 Q90 66 78 58 Q88 30 66 12 Z"/>
+    </symbol>
+    <symbol id="hair-largo" viewBox="0 0 100 130">
+      <path d="M21 28 Q17 -2 50 -2 Q83 -2 79 28 L79 16 Q79 3 50 3 Q21 3 21 16 Z"/>
+      <path d="M20 18 Q10 60 17 100 L32 100 Q24 58 33 18 Z"/>
+      <path d="M80 18 Q90 60 83 100 L68 100 Q76 58 67 18 Z"/>
+    </symbol>
+    <symbol id="hair-mono" viewBox="0 0 100 130">
+      <path d="M21 26 Q18 3 50 3 Q82 3 79 26 L79 15 Q79 7 50 7 Q21 7 21 15 Z"/>
+      <circle cx="50" cy="4" r="9"/>
+    </symbol>
   </defs>
 </svg>
 
@@ -513,10 +549,8 @@
       <span id="login-photo-placeholder">📷 Añadir foto (opcional)</span>
     </label>
 
-    <div class="gender-pills" id="gender-pills">
-      <button type="button" class="gender-pill" data-gender="chico">🧑 Chico</button>
-      <button type="button" class="gender-pill" data-gender="chica">👧 Chica</button>
-    </div>
+    <p class="model-grid-label">Elige tu muñeco</p>
+    <div class="model-grid" id="model-grid"></div>
 
     <button class="btn-primary" id="login-btn">Jugar</button>
   </div>
@@ -677,6 +711,38 @@ function boot() {
     };
   }
 
+  const AVATAR_MODELS = [
+    { id: 'chico_corto', body: 'chico', hair: 'corto', label: 'Corto' },
+    { id: 'chico_rizado', body: 'chico', hair: 'rizado', label: 'Rizado' },
+    { id: 'chico_punta', body: 'chico', hair: 'punta', label: 'De punta' },
+    { id: 'chica_coleta', body: 'chica', hair: 'coleta', label: 'Coleta' },
+    { id: 'chica_largo', body: 'chica', hair: 'largo', label: 'Largo' },
+    { id: 'chica_mono', body: 'chica', hair: 'mono', label: 'Moño' },
+  ];
+  const HAIR_COLOR = '#4a3728';
+
+  let funkoIdCounter = 0;
+  // Shared renderer: the login picker calls this directly (no photo yet,
+  // a neutral preview color) and funkoAvatarHTML calls it for a real
+  // player, looked up by name.
+  function funkoSvgMarkup(model, color, photo, name, size) {
+    const clipId = 'funko-clip-' + (funkoIdCounter++);
+    const face = photo
+      ? '<clipPath id="' + clipId + '"><circle cx="50" cy="34" r="29"/></clipPath>' +
+        '<image href="' + photo + '" x="19" y="3" width="62" height="62" clip-path="url(#' + clipId + ')" preserveAspectRatio="xMidYMid slice"/>'
+      : '<circle cx="50" cy="34" r="29" fill="' + color + '"/>' +
+        '<text x="50" y="42" text-anchor="middle" font-family="Baloo 2" font-weight="700" font-size="22" fill="#fff">' + escapeHtml(initialsFor(name || '')) + '</text>';
+    return '<svg class="funko-avatar" viewBox="0 0 100 130" style="width:' + size + 'px;height:' + Math.round(size * 1.3) + 'px">' +
+      '<use href="#hair-' + model.hair + '" fill="' + HAIR_COLOR + '"/>' +
+      '<use href="#funko-body-' + model.body + '" fill="' + color + '"/>' +
+      face +
+      '<circle cx="50" cy="34" r="29" fill="none" stroke="var(--panel)" stroke-width="3"/>' +
+      '</svg>';
+  }
+  function modelById(id) {
+    return AVATAR_MODELS.find((m) => m.id === id) || AVATAR_MODELS[0];
+  }
+
   /* ================= player / login ================= */
   const PLAYER_KEY = 'sala-de-juegos:player-name';
   const PHOTO_KEY = 'sala-de-juegos:player-photo';
@@ -700,7 +766,13 @@ function boot() {
   const photoLabel = document.getElementById('photo-upload-label');
   const photoPreview = document.getElementById('login-photo-preview');
   const photoPlaceholder = document.getElementById('login-photo-placeholder');
-  const genderPills = document.querySelectorAll('.gender-pill');
+  const modelGrid = document.getElementById('model-grid');
+  modelGrid.innerHTML = AVATAR_MODELS.map((m) =>
+    '<button type="button" class="model-pick" data-model="' + m.id + '">' +
+    funkoSvgMarkup(m, '#b9b4c9', null, '', 46) +
+    '<span>' + escapeHtml(m.label) + '</span></button>'
+  ).join('');
+  const modelButtons = modelGrid.querySelectorAll('.model-pick');
 
   // Downscales + crops to a square JPEG so a phone photo (often several
   // MB) becomes a small data URL cheap to store as a plain Supabase
@@ -741,11 +813,11 @@ function boot() {
     }
   });
 
-  function setGender(g) {
-    playerGender = g;
-    genderPills.forEach((b) => b.classList.toggle('is-active', b.dataset.gender === g));
+  function setGender(id) {
+    playerGender = id;
+    modelButtons.forEach((b) => b.classList.toggle('is-active', b.dataset.model === id));
   }
-  genderPills.forEach((b) => b.addEventListener('click', () => setGender(b.dataset.gender)));
+  modelButtons.forEach((b) => b.addEventListener('click', () => setGender(b.dataset.model)));
 
   function renderPlayerChip() {
     if (!playerName) { playerChip.hidden = true; return; }
@@ -862,25 +934,10 @@ function boot() {
     if (photo) return '<div class="avatar"><img src="' + photo + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>';
     return '<div class="avatar" style="background:' + colorForName(name) + '">' + escapeHtml(initialsFor(name)) + '</div>';
   }
-
-  let funkoIdCounter = 0;
   function funkoAvatarHTML(name, size) {
-    const slug = slugify(name);
-    const profile = allPlayers.get(slug);
-    const photo = profile && profile.photo;
-    const gender = (profile && profile.gender) === 'chica' ? 'chica' : 'chico';
-    const color = colorForName(name);
-    const clipId = 'funko-clip-' + (funkoIdCounter++);
-    const face = photo
-      ? '<clipPath id="' + clipId + '"><circle cx="50" cy="34" r="29"/></clipPath>' +
-        '<image href="' + photo + '" x="19" y="3" width="62" height="62" clip-path="url(#' + clipId + ')" preserveAspectRatio="xMidYMid slice"/>'
-      : '<circle cx="50" cy="34" r="29" fill="' + color + '"/>' +
-        '<text x="50" y="42" text-anchor="middle" font-family="Baloo 2" font-weight="700" font-size="22" fill="#fff">' + escapeHtml(initialsFor(name)) + '</text>';
-    return '<svg class="funko-avatar" viewBox="0 0 100 130" style="width:' + size + 'px;height:' + Math.round(size * 1.3) + 'px">' +
-      '<use href="#funko-body-' + gender + '" fill="' + color + '"/>' +
-      face +
-      '<circle cx="50" cy="34" r="29" fill="none" stroke="var(--panel)" stroke-width="3"/>' +
-      '</svg>';
+    const profile = allPlayers.get(slugify(name));
+    const model = modelById(profile && profile.gender);
+    return funkoSvgMarkup(model, colorForName(name), profile && profile.photo, name, size);
   }
 
   // Points reward reaching further levels, not just finishing an early
