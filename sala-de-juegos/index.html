@@ -1019,8 +1019,8 @@ function boot() {
     boardBody.innerHTML = html;
   }
   function statLabel(r) {
-    return 'Nivel ' + r.maxLevel + ' · ' + r.totalPoints + ' pts <span class="stars">(' +
-      '★'.repeat(Math.min(r.totalStars, 99)) + ')</span>';
+    return 'Nivel ' + r.maxLevel + ' · ' + r.totalPoints + ' pts <span class="stars">(★ ×' +
+      r.totalStars + ')</span>';
   }
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
