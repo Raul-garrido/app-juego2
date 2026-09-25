@@ -227,9 +227,14 @@
   .model-pick.is-active span { color: var(--ink); }
 
   /* ---------- funko avatar ---------- */
-  .funko-avatar { display: block; overflow: visible; }
-  .funko-avatar [id^="funko-body"],
-  .funko-avatar use { filter: drop-shadow(0 3px 4px rgba(0,0,0,0.25)); }
+  .funko-avatar {
+    position: relative;
+    display: block;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.25));
+  }
 
   /* ---------- leaderboard ---------- */
   .board-section {
@@ -267,14 +272,25 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     align-items: end;
-    gap: 8px;
+    gap: 6px;
     margin: 8px 0 16px;
+    max-width: 100%;
   }
-  .podium-slot { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .podium-slot { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
   .podium-slot .avatar { width: 46px; height: 46px; font-size: 18px; }
   .podium-slot.rank-1 .avatar { width: 58px; height: 58px; font-size: 22px; }
-  .podium-name { font-weight: 800; font-size: 12.5px; text-align: center; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .podium-stat { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .podium-name { font-weight: 800; font-size: 12.5px; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .podium-stat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+    max-width: 100%;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.3;
+  }
   .podium-bar {
     width: 100%;
     border-radius: 10px 10px 0 0;
@@ -452,44 +468,6 @@
 </style>
 </head>
 <body>
-
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <symbol id="funko-body-chico" viewBox="0 0 100 130">
-      <path d="M20 64 Q20 55 30 53 L70 53 Q80 55 80 64 L84 122 Q84 128 78 128 L22 128 Q16 128 16 122 Z"/>
-      <circle cx="12" cy="88" r="9"/>
-      <circle cx="88" cy="88" r="9"/>
-    </symbol>
-    <symbol id="funko-body-chica" viewBox="0 0 100 130">
-      <path d="M22 64 Q22 55 32 53 L68 53 Q78 55 78 64 L70 98 L95 128 L5 128 L30 98 Z"/>
-      <circle cx="14" cy="86" r="9"/>
-      <circle cx="86" cy="86" r="9"/>
-    </symbol>
-    <symbol id="hair-corto" viewBox="0 0 100 130">
-      <path d="M21 28 Q17 -2 50 -2 Q83 -2 79 28 L79 16 Q79 3 50 3 Q21 3 21 16 Z"/>
-    </symbol>
-    <symbol id="hair-rizado" viewBox="0 0 100 130">
-      <circle cx="24" cy="20" r="10"/><circle cx="38" cy="8" r="11"/><circle cx="50" cy="4" r="11"/>
-      <circle cx="62" cy="8" r="11"/><circle cx="76" cy="20" r="10"/><circle cx="17" cy="32" r="8"/><circle cx="83" cy="32" r="8"/>
-    </symbol>
-    <symbol id="hair-punta" viewBox="0 0 100 130">
-      <path d="M22 24 L28 4 L34 20 L40 0 L46 18 L50 2 L54 18 L60 0 L66 20 L72 4 L78 24 Q79 15 79 15 Q79 4 50 4 Q21 4 21 15 Q21 15 22 24 Z"/>
-    </symbol>
-    <symbol id="hair-coleta" viewBox="0 0 100 130">
-      <path d="M21 28 Q17 -2 50 -2 Q83 -2 79 28 L79 16 Q79 3 50 3 Q21 3 21 16 Z"/>
-      <path d="M70 8 Q96 8 92 50 Q90 66 78 58 Q88 30 66 12 Z"/>
-    </symbol>
-    <symbol id="hair-largo" viewBox="0 0 100 130">
-      <path d="M21 28 Q17 -2 50 -2 Q83 -2 79 28 L79 16 Q79 3 50 3 Q21 3 21 16 Z"/>
-      <path d="M20 18 Q10 60 17 100 L32 100 Q24 58 33 18 Z"/>
-      <path d="M80 18 Q90 60 83 100 L68 100 Q76 58 67 18 Z"/>
-    </symbol>
-    <symbol id="hair-mono" viewBox="0 0 100 130">
-      <path d="M21 26 Q18 3 50 3 Q82 3 79 26 L79 15 Q79 7 50 7 Q21 7 21 15 Z"/>
-      <circle cx="50" cy="4" r="9"/>
-    </symbol>
-  </defs>
-</svg>
 
 <div class="wrap">
   <div class="topbar">
@@ -711,33 +689,38 @@ function boot() {
     };
   }
 
+  // Real doll-figure photos (cropped to a head+shoulders bust) instead of
+  // drawn shapes. `face` is the oval where a player's own photo gets
+  // layered on top, as percentages of the bust image's own box - so it
+  // scales correctly at any render size without touching pixels.
   const AVATAR_MODELS = [
-    { id: 'chico_corto', body: 'chico', hair: 'corto', label: 'Corto' },
-    { id: 'chico_rizado', body: 'chico', hair: 'rizado', label: 'Rizado' },
-    { id: 'chico_punta', body: 'chico', hair: 'punta', label: 'De punta' },
-    { id: 'chica_coleta', body: 'chica', hair: 'coleta', label: 'Coleta' },
-    { id: 'chica_largo', body: 'chica', hair: 'largo', label: 'Largo' },
-    { id: 'chica_mono', body: 'chica', hair: 'mono', label: 'Moño' },
+    { id: 'chico_barba', file: 'avatars/chico_barba.webp', label: 'Con barba',
+      face: { left: 21.21, top: 27.27, w: 57.58, h: 54.55 } },
+    { id: 'chico_ondulado', file: 'avatars/chico_ondulado.webp', label: 'Ondulado',
+      face: { left: 23.33, top: 32.36, w: 53.33, h: 64.00 } },
+    { id: 'chico_calvo_azul', file: 'avatars/chico_calvo_azul.webp', label: 'Calvo azul',
+      face: { left: 24.24, top: 24.36, w: 51.52, h: 72.73 } },
+    { id: 'chico_calvo_negro', file: 'avatars/chico_calvo_negro.webp', label: 'Calvo negro',
+      face: { left: 24.24, top: 24.36, w: 51.52, h: 72.73 } },
+    { id: 'chica_coleta', file: 'avatars/chica_coleta.webp', label: 'Coleta',
+      face: { left: 25.76, top: 28.00, w: 51.52, h: 58.18 } },
   ];
-  const HAIR_COLOR = '#4a3728';
+  const AVATAR_ASPECT = 275 / 330; // bust crop's own height/width ratio
 
-  let funkoIdCounter = 0;
-  // Shared renderer: the login picker calls this directly (no photo yet,
-  // a neutral preview color) and funkoAvatarHTML calls it for a real
-  // player, looked up by name.
-  function funkoSvgMarkup(model, color, photo, name, size) {
-    const clipId = 'funko-clip-' + (funkoIdCounter++);
-    const face = photo
-      ? '<clipPath id="' + clipId + '"><circle cx="50" cy="34" r="29"/></clipPath>' +
-        '<image href="' + photo + '" x="19" y="3" width="62" height="62" clip-path="url(#' + clipId + ')" preserveAspectRatio="xMidYMid slice"/>'
-      : '<circle cx="50" cy="34" r="29" fill="' + color + '"/>' +
-        '<text x="50" y="42" text-anchor="middle" font-family="Baloo 2" font-weight="700" font-size="22" fill="#fff">' + escapeHtml(initialsFor(name || '')) + '</text>';
-    return '<svg class="funko-avatar" viewBox="0 0 100 130" style="width:' + size + 'px;height:' + Math.round(size * 1.3) + 'px">' +
-      '<use href="#hair-' + model.hair + '" fill="' + HAIR_COLOR + '"/>' +
-      '<use href="#funko-body-' + model.body + '" fill="' + color + '"/>' +
-      face +
-      '<circle cx="50" cy="34" r="29" fill="none" stroke="var(--panel)" stroke-width="3"/>' +
-      '</svg>';
+  // Shared renderer: the login picker calls this with no photo (shows the
+  // template's own face, as-is) and funkoAvatarHTML calls it for a real
+  // player, looked up by name, with their photo layered into the face oval.
+  function funkoImgHTML(model, photo, size) {
+    const w = Math.round(size);
+    const h = Math.round(size * AVATAR_ASPECT);
+    const overlay = photo
+      ? '<img src="' + photo + '" alt="" style="position:absolute;left:' + model.face.left + '%;top:' + model.face.top + '%;' +
+        'width:' + model.face.w + '%;height:' + model.face.h + '%;border-radius:50%;object-fit:cover;">'
+      : '';
+    return '<div class="funko-avatar" style="width:' + w + 'px;height:' + h + 'px;">' +
+      '<img src="' + model.file + '" alt="" style="width:100%;height:100%;display:block;">' +
+      overlay +
+      '</div>';
   }
   function modelById(id) {
     return AVATAR_MODELS.find((m) => m.id === id) || AVATAR_MODELS[0];
@@ -769,7 +752,7 @@ function boot() {
   const modelGrid = document.getElementById('model-grid');
   modelGrid.innerHTML = AVATAR_MODELS.map((m, i) =>
     '<button type="button" class="model-pick" data-model="' + m.id + '">' +
-    funkoSvgMarkup(m, AVATAR_COLORS[i % AVATAR_COLORS.length], null, '', 46) +
+    funkoImgHTML(m, null, 46) +
     '<span>' + escapeHtml(m.label) + '</span></button>'
   ).join('');
   const modelButtons = modelGrid.querySelectorAll('.model-pick');
@@ -944,7 +927,7 @@ function boot() {
   function funkoAvatarHTML(name, size) {
     const profile = allPlayers.get(slugify(name));
     const model = modelById(profile && profile.gender);
-    return funkoSvgMarkup(model, colorForName(name), profile && profile.photo, name, size);
+    return funkoImgHTML(model, profile && profile.photo, size);
   }
 
   // Points reward reaching further levels, not just finishing an early
