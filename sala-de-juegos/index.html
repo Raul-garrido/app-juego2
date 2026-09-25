@@ -783,11 +783,16 @@ function boot() {
       reader.readAsDataURL(file);
     });
   }
+  // True once the user has explicitly picked a photo/modelo in this login
+  // attempt - once that happens, the name-matching below must never
+  // overwrite their choice.
+  let manualChoiceMade = false;
   photoInput.addEventListener('change', async () => {
     const file = photoInput.files && photoInput.files[0];
     if (!file) return;
     try {
       playerPhoto = await resizePhoto(file);
+      manualChoiceMade = true;
       photoPreview.src = playerPhoto;
       photoPreview.hidden = false;
       photoPlaceholder.hidden = true;
@@ -800,7 +805,36 @@ function boot() {
     playerGender = id;
     modelButtons.forEach((b) => b.classList.toggle('is-active', b.dataset.model === id));
   }
-  modelButtons.forEach((b) => b.addEventListener('click', () => setGender(b.dataset.model)));
+  modelButtons.forEach((b) => b.addEventListener('click', () => {
+    manualChoiceMade = true;
+    setGender(b.dataset.model);
+  }));
+
+  // Lets a name typed on a new device pick up the photo/modelo already
+  // saved for that name elsewhere, so a player has continuity across
+  // devices instead of starting from a blank profile every time.
+  let nameMatchTimer = null;
+  function applyNameMatch(name) {
+    if (manualChoiceMade) return; // respect a photo/modelo the user just picked
+    const slug = slugify(name);
+    if (!slug || name === playerName) return; // empty, or this device's own already-loaded identity
+    const remote = allPlayers.get(slug);
+    playerPhoto = (remote && remote.photo) || '';
+    playerGender = (remote && remote.gender) || '';
+    if (playerPhoto) {
+      photoPreview.src = playerPhoto;
+      photoPreview.hidden = false;
+      photoPlaceholder.hidden = true;
+    } else {
+      photoPreview.hidden = true;
+      photoPlaceholder.hidden = false;
+    }
+    setGender(playerGender);
+  }
+  loginInput.addEventListener('input', () => {
+    clearTimeout(nameMatchTimer);
+    nameMatchTimer = setTimeout(() => applyNameMatch(loginInput.value.trim()), 300);
+  });
 
   function renderPlayerChip() {
     if (!playerName) { playerChip.hidden = true; return; }
@@ -816,6 +850,7 @@ function boot() {
   }
   function showLogin() {
     loginOverlay.hidden = false;
+    manualChoiceMade = false;
     loginInput.value = playerName || '';
     if (playerPhoto) {
       photoPreview.src = playerPhoto;
@@ -833,6 +868,13 @@ function boot() {
     const v = loginInput.value.trim().slice(0, 18);
     if (!v) return;
     playerName = v;
+    // Safety net for the input-based match above: if this device still has
+    // no photo/modelo chosen for this name (e.g. it typed and hit "Entrar"
+    // before the profiles finished loading), fall back to whatever profile
+    // already exists remotely instead of overwriting it with empty values.
+    const existingRemote = allPlayers.get(slugify(playerName));
+    if (!playerPhoto && existingRemote && existingRemote.photo) playerPhoto = existingRemote.photo;
+    if (!playerGender && existingRemote && existingRemote.gender) playerGender = existingRemote.gender;
     try {
       localStorage.setItem(PLAYER_KEY, v);
       if (playerPhoto) localStorage.setItem(PHOTO_KEY, playerPhoto);
@@ -1046,6 +1088,7 @@ function boot() {
     }
     allPlayers = new Map(data.map((row) => [row.id, { player: row.player, photo: row.photo, gender: row.gender }]));
     renderBoard();
+    if (!loginOverlay.hidden) applyNameMatch(loginInput.value.trim());
   }
 
   function initDb() {
